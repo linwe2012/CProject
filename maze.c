@@ -8,6 +8,10 @@
 #define DESTINATION 3
 #define MAX 100
 
+#define DEBUG 0
+
+
+
 int maze[MAX][MAX];
 int visit[MAX][MAX];
 struct vector{
@@ -27,6 +31,53 @@ struct lists *phead,*ptail;
 
 int sol_row,sol_col;
 
+#if DEBUG
+void testdrawMap(int  maxLine,int Enter){
+	int i,j;
+	int map[MAX][MAX];
+	i= 0;
+	for(i=0;i<maxLine;i++){
+		for(j=0;j<maxLine;j++){
+			map[i][j] = maze[i][j];
+		}
+	}
+	while((solution[0][i].x != end.x  || solution[0][i].y != end.y )&& (solution[0][i].x != -1  || solution[0][i].y != -1)){ 
+		map[solution[0][i].x][solution[0][i].y] = WAY;
+		i++;
+	}
+	for(i=0;i<maxLine;i++){
+		for(j=0;j<maxLine;j++){
+			if(map[i][j] >= 2){
+				printf("%c",'o');
+			}
+			if(map[i][j] == CLEAR){
+				printf(" ");
+			}
+			if(map[i][j] == BLOCK){
+				printf("%c",'#');
+			}
+		}
+		printf("\n");
+	}
+	for(i=1;i<=Enter;i++){
+		printf("\n");
+	}
+}
+
+void checkList(){
+	int i=0;
+	struct lists *p1 = phead,*p2;
+	while(p1 != NULL){
+		p2 = p1;
+		p1 = p1->next;
+		i++;
+	}
+	printf("Listchecked: %d\n",i);
+	if(p2 != ptail){
+		printf("Ptail is wrong!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+	}
+}
+
 void ptmap(int maxLine){
 	int i,j;
 	for(i=0;i<maxLine;i++){
@@ -39,9 +90,25 @@ void ptmap(int maxLine){
 	printf("\n");
 }
 
+int testIsolateCell(int x,int y,int edge,int step ){
+	int i;
+	if(step == 0){
+		return 0;
+	}
+	for(i=0;i<4;i++){
+		if(maze[x+move[i].x][y+move[i].y] == CLEAR && x+move[i].x<edge-1 && x+move[i].x>0 && y+move[i].y<edge-1 && y+move[i].y>0){
+			if(testIsolateCell(x+move[i].x,y+move[i].y,edge,step-1) == 0){
+				return 0;
+			}
+		}
+	}
+	return 1;//its blocked in several steps;
+}
+#endif
+
+
 void drawMap(int  maxLine,int Enter){
 	int i,j;
-	
 	
 	for(i=0;i<maxLine;i++){
 		for(j=0;j<maxLine;j++){
@@ -63,98 +130,106 @@ void drawMap(int  maxLine,int Enter){
 	}
 }
 
-void testdrawMap(int  maxLine,int Enter){
-	int i,j;
-	int map[MAX][MAX];
-	i= 0;
-	for(i=0;i<maxLine;i++){
-		for(j=0;j<maxLine;j++){
-			map[i][j] = maze[i][j];
+
+void iniSolution(){
+	int i,j,max = MAX*MAX;
+	for(i = 0;i<MAX;i++){
+		for(j=0;j<max;j++){
+			solution[i][j].x = -1; // no solution
+			solution[i][j].y = -1; // no solution
 		}
-	}
-	while((solution[0][i].x != end.x  || solution[0][i].y != end.y )&& (solution[0][i].x != -1  || solution[0][i].y != -1)){ 
-		map[solution[0][i].x][solution[0][i].y] = WAY;
-		i++;
-	}
-	for(i=0;i<maxLine;i++){
-		for(j=0;j<maxLine;j++){
-			//printf("%d ",maze[i][j]);
-			if(map[i][j] >= 2){
-				printf("%c",'o');
-			}
-			if(map[i][j] == CLEAR){
-				printf(" ");
-			}
-			if(map[i][j] == BLOCK){
-				printf("%c",'#');
-			}
-		}
-		printf("\n");
-	}
-	for(i=1;i<=Enter;i++){
-		printf("\n");
-	}
+	}		
+	sol_row=sol_col=0;
 }
+
 
 void iniData(){
 	int i,j;
 	for(i = 0;i<MAX;i++){
 		for(j=0;j<MAX;j++){
 			maze[i][j] = BLOCK;
-			visit[i][j] = 0;
 		}
-		solution[i][0].x = -1; // no solution
-		solution[i][0].y = -1; // no solution
 	}
 	move[0].x = 1;  move[0].y = 0;  //right
 	move[1].x = -1; move[1].y = 0;  //left
 	move[2].x = 0;  move[2].y = 1;  //up
 	move[3].x = 0;  move[3].y = -1; //down
 	
-	sol_row=sol_col=0;
+	iniSolution();
 }
 
-void iniVisit(){
+void iniVisit(int edge){
 	int i,j;
-	for(i = 0;i<MAX;i++){
-		for(j=0;j<MAX;j++){
+	
+	for(i = 1;i<MAX;i++){
+		for(j=1;j<MAX;j++){
 			visit[i][j] = 0;
-			solution[i][j].x = -1; // no solution
-			solution[i][j].y = -1; // no solution
+
 		}
+	}
+	for(i = 0;i<edge;i++){
+		visit[0][i] = 1;
+		visit[i][0] = 1;
+		visit[edge-1][i] = 1;
+		visit[i][edge-1] = 1;
 	}
 }
 
-
+void iniDfs(int edge){
+	int x,y,x1,y1;
+	int i;
+	iniVisit(edge);
+	visit[start.x][start.y] = 0;
+	visit[end.x][end.y] = 0;
+	for(i=0;i<4;i++){
+		x = end.x + move[i].x ;
+		y = end.y + move[i].y ;
+		x1 = start.x + move[i].x ;
+		y1 = start.y + move[i].y ;
+		if(x>=0 && y>=0 && x<edge && y<edge && maze[x][y] != BLOCK){
+			visit[x][y] = 0;
+		}
+		if(x1>=0 && y1>=0 && x1<edge && y1<edge && maze[x1][y1] != BLOCK){
+			visit[x1][y1] = 0;
+		}
+	}
+}
 
 /////////find the way out///////////////////////////////////////////////////////////////////////////
 void dfs(int x,int y,int edge)
 {
 	int i,x1,y1;
 	
+	//printf("In it\n");
 	if(maze[x][y] == DESTINATION){
 		solution[sol_row][sol_col].x  = x;
 		solution[sol_row][sol_col].y  = y;
 		sol_row ++;
 		//sol_col= 0;
-		//printf("find one!\n");
+		#if DEBUG
+		printf("find one!\n");
+		#endif
 		//drawMap(edge,2);
 		return;
 	}
 	
+	
+	
+	//printf("start for\n");
 	for(i=0;i<4;i++){
 		x1 = x + move[i].x ;
 		y1 = y + move[i].y ;
+		//printf("In for %d \n",i);
 		if(x1>=0&&y1>=0&&x1<edge&&y1<edge &&visit[x1][y1] == 0 && maze[x1][y1] != BLOCK){
 			solution[sol_row][sol_col].x  = x1;
 			solution[sol_row][sol_col].y  = y1;
-			visit[x][y] = 1;
 			sol_col++;
+			visit[x1][y1] = 1;
 			//printf("row = %d,col = %d\n pos.x = %d",sol_row,sol_col);
 			//printf("nextpath found\n");
 			//testdrawMap(edge,2);
 			dfs(x1,y1,edge);
-			visit[x][y] = 0;
+			visit[x1][y1] = 0;
 			if(sol_col>0){
 				sol_col--;
 			}
@@ -172,33 +247,20 @@ void dfs(int x,int y,int edge)
 
 
 ///////Maze Generator////////////////////////////////////////////////////////////////////////////////
-int testIsolateCell(int x,int y,int edge,int step ){
-	int i;
-	if(step == 0){
-		return 0;
-	}
-	for(i=0;i<4;i++){
-		if(maze[x+move[i].x][y+move[i].y] == CLEAR && x+move[i].x<edge-1 && x+move[i].x>0 && y+move[i].y<edge-1 && y+move[i].y>0){
-			if(testIsolateCell(x+move[i].x,y+move[i].y,edge,step-1) == 0){
-				return 0;
-			}
-		}
-	}
-	return 1;//its blocked in several steps;
-}
 void oddNumberFixer(int edge){
 	int i;
 	int visitmap[7][7];
+	/*
 	for(i = 1;i<edge-1;i++){
 		srand(time(0));
-		if(rand() % 4 == 0){
+		if(rand() % 2 == 0){
 			maze[i][edge-2] = CLEAR;
 		}
 		srand(time(0));
-		if(rand() % 4 == 0){
+		if(rand() % 2 == 0){
 			maze[edge-2][i] = CLEAR;
 		}
-	}
+	}*/
 	for(i=-2;i<3;i++){
 		if(edge-2 != end.y){
 		
@@ -210,6 +272,7 @@ void oddNumberFixer(int edge){
 	} 
 	maze[end.x][end.y] = DESTINATION;
 }
+
 void prePrim(int edge){
 	int i,j;
 	for(i = 1;i<edge-1;i+=2){
@@ -255,12 +318,7 @@ void prePrim(int edge){
 	//}
 	//ptmap(edge);
 	
-	for(i = 0;i<edge;i++){
-		visit[0][i] = 1;
-		visit[i][0] = 1;
-		visit[edge-1][i] = 1;
-		visit[i][edge-1] = 1;
-	}
+	iniVisit(edge);
 
 	listLen = 0;
 	phead = ptail = NULL;
@@ -342,19 +400,7 @@ struct lists *getlistinfo(int position){
 	return p1;
 }
 
-void checkList(){
-	int i=0;
-	struct lists *p1 = phead,*p2;
-	while(p1 != NULL){
-		p2 = p1;
-		p1 = p1->next;
-		i++;
-	}
-	printf("Listchecked: %d\n",i);
-	if(p2 != ptail){
-		printf("Ptail is wrong!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-	}
-}
+
 
 int generateMaze_prim(int edge){
 	struct vector nstart;
@@ -362,7 +408,7 @@ int generateMaze_prim(int edge){
 	int x,y;
 	int clear_x,clear_y;//Path
 	int tempVisit;
-	int i;
+	int i,j;
 	prePrim(edge);
 	
 	//the first random cell
@@ -441,7 +487,6 @@ int generateMaze_prim(int edge){
 		//printf("afterdel,liseLen = %d\n",listLen);
 		//ptmap(edge);
 		//checkList();
-		
 	}
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -486,50 +531,69 @@ void getmaze(int n)
 	}/*本来其他地方都是0，路径是1，现在把除了最外圈围墙以外的部分随机设为0或1*/
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
-
+void solutionToMaze(){
+	int i = 0;
+	while(solution[0][i].x != end.x  || solution[0][i].y != end.y){
+		maze[solution[0][i].x][solution[0][i].y] = WAY;
+		i++;
+	}
+}
 int main()
 {
 	int i;
 	int maxLine;
 	int genMethod;
-	scanf("%d",&maxLine);
-	iniData();
-	
-	start.x = start.y = 0;
-	end.x = end.y = maxLine-1;
-	
 	while(1){
-	printf("chose maze generation method: 1.random     2.prim \n");
-	scanf("%d",&genMethod);
-		if(genMethod == 1){
-			getmaze(maxLine);
-			break;
+		printf("Input the size of the Input any non-positive number to end.\n");
+		scanf("%d",&maxLine);
+		if(maxLine<=0){
+			return 0;
 		}
-		else if(genMethod == 2){
-			generateMaze_prim(maxLine);
-			if(maxLine%2 == 0){
-				oddNumberFixer(maxLine);
+		iniData();
+		
+		start.x = start.y = 0;
+		end.x = end.y = maxLine-1;
+		
+		while(1){
+		printf("Choose maze generation method: 0.change the size    1.random     2.prim.\n");
+		scanf("%d",&genMethod);
+			if(genMethod == 1 || genMethod == 2){
+				
+				if(genMethod == 2){
+					generateMaze_prim(maxLine);
+					if(maxLine%2 == 0){
+						oddNumberFixer(maxLine);
+					}
+				}
+				else{
+					getmaze(maxLine);
+				}
+				
+				
+				#if DEBUG
+				ptmap(maxLine);
+				#endif
+				drawMap(maxLine,2);
+				iniDfs(maxLine);
+				
+				//printf("iniVisit Finished\n");
+				dfs(start.x,start.y,maxLine);
+				//printf("dfs Finished\n");
+				solutionToMaze();
+				
+				getchar();
+				getchar();
+				drawMap(maxLine,3);
 			}
-			break;
+			else if(genMethod == 0){
+				break;
+			}
+			else {
+				printf("Input 0, 1 or 2.\n");
+			}
 		}
-		else {
-			printf("Input 1 or 2\n");
-		}
+		
 	}
-	
-	
-	ptmap(maxLine);
-	iniVisit();
-	//drawMap(maxLine,2);
-	//printf("iniVisit Finished\n");
-	dfs(start.x,start.y,maxLine);
-	//printf("dfs Finished\n");
-	i = 0;
-	while(solution[0][i].x != end.x  || solution[0][i].y != end.y){
-		maze[solution[0][i].x][solution[0][i].y] = WAY;
-		i++;
-	}
-	drawMap(maxLine,0);
 	return 0; 
 } 
 
