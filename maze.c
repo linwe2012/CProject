@@ -7,8 +7,10 @@
 #define BLOCK 0
 #define WAY 2
 #define DESTINATION 3
-#define MAX 100
+#define START 4
 
+#define MAX 100
+#define MIN 2
 #define DEBUG 0
 
 /*
@@ -299,28 +301,30 @@ printf("fail,withdraw\n");
 ///////Maze Generator////////////////////////////////////////////////////////////////////////////////
 void oddNumberFixer(int edge){
 	int i;
-	int visitmap[7][7];
-	/*
+	int seed;
 	for(i = 1;i<edge-1;i++){
-		srand(time(0));
-		if (rand() % 2 == 0){
+		
+		if (rand() % 5 == 0){
 			maze[i][edge-2] = CLEAR;
 		}
-		srand(time(0));
-		if (rand() % 2 == 0){
+		if (rand() % 5 == 0){
 			maze[edge-2][i] = CLEAR;
 		}
-	}*/
+	}
 	for(i=-2;i<3;i++){
 		if (edge-2 != end.y){
-		
-			maze[end.x+i][edge-2] = CLEAR;
-			maze[edge-2][end.y+i] = CLEAR;
-			maze[start.x+i][edge-2] = CLEAR;
-			maze[edge-2][start.y] = CLEAR;
+			if (end.x+i < edge && end.x+i > 0)
+				maze[end.x+i][edge-2] = CLEAR;
+			if (end.y+i < edge && end.y+i > 0)
+				maze[edge-2][end.y+i] = CLEAR;
+			if (start.x+i < edge && start.x+i > 0)
+				maze[start.x+i][edge-2] = CLEAR;
+			if (start.y+i < edge && start.y+i > 0)
+			maze[edge-2][start.y+i] = CLEAR;
 		}
 	} 
 	maze[end.x][end.y] = DESTINATION;
+	maze[start.x][start.y] = START;
 }
 
 /**
@@ -498,9 +502,7 @@ int generateMaze_prim(int edge){
 	
 	/*the first random cell*/
 	
-	srand(time(0));
 	clear_x=nstart.x = rand() % (edge-1) / 2 * 2 + 1;
-	srand(time(0));
 	clear_y=nstart.y = rand() % (edge-1) / 2 * 2 + 1;
 	if (nstart.x == edge){
 		nstart.x-=2;
@@ -519,7 +521,6 @@ int generateMaze_prim(int edge){
 #if DEBUG >= 4
 printf("new while preparing, current listLen= %d, tempVisit = %d\n",listLen,tempVisit);
 #endif
-		srand(time(0));
 		tempVisit = rand() % listLen;
 #if DEBUG >= 4
 printf("new while preparing, current listLen= %d, tempVisit = %d,ready to getinfo\n",listLen,tempVisit);
@@ -578,6 +579,7 @@ ptmap(edge);
 checkList();
 #endif
 	}
+	maze[start.x][start.y] = START;
 }
 
 
@@ -646,13 +648,27 @@ int main()
 	int i;
 	int maxLine;
 	int genMethod;
+	srand(time(NULL));
 	while (1){
 		printf("Input the size of the Input any non-positive number to end.\n");
 		scanf("%d",&maxLine);
 		if(maxLine<=0){
 			return 0;
 		}
-	
+		else if(maxLine <= MIN){
+			i = rand() % 4;
+			if(i == 0)
+				printf("Come on! Choose a larger number!\n");
+			else if(i == 1)
+				printf("Any number larger than 2!\n");
+			else if(i == 2)
+				printf("Have some Guts! Challenge yourself! Number bigger than 2!\n");
+			else{
+				printf("What's the point in having a maze of %d*%d? Number bigger than 2!\n",maxLine,maxLine);
+			}
+			continue;
+		}
+		
 		while (1){
 		printf("Choose maze generation method: 0.change the size    1.random     2.prim.\n");
 		scanf("%d",&genMethod);
@@ -692,7 +708,19 @@ printf("dfs Finished\n");
 				break;
 			}
 			else {
-				printf("Input 0, 1 or 2.\n");
+				i = rand() % 5;
+				if (i == 0)
+					printf("Mmmm..., just... Input 0, 1 or 2.\n");
+				else if (i == 1)
+					printf("+ Knock! Knock!\n- Who's There?\n+ Number %d\n- Wrong!\nNow just input 0, 1 or 2.\n",genMethod);
+				else if (i == 2)
+					printf("Sorry! The number you have dialed is wrong, Input 0, 1 or 2.\n");
+				else if (i == 3){
+					printf("Ahah! U R Wrong! Input 0, 1 or 2.\n");
+				}
+				else{
+					printf("\aBuzzzzzz. Wrong! Input 0, 1 or 2.\n");
+				}
 			}
 		}
 		
