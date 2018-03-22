@@ -137,7 +137,7 @@ void drawMap(int  maxLine, HANDLE handle, int Enter){
 #if DEBUG
 printf("%d ",maze[i][j]);
 #endif
-			if (maze[i][j] >= 2){
+			if (maze[i][j] == DESTINATION || maze[i][j] == WAY){
 				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 				printf("%c%c",161,239);
 			}
@@ -592,7 +592,7 @@ void getmaze(int n)
 {
 	int i,j,a,b;	
 	i=n;j=n;a=1;b=1;
-	maze[a][b]=WAY;/*Èë¿Ú*/ 
+	maze[a][b]=WAY;/*å…¥å£*/ 
 	start.x = a; start.y = b;
 	
 	srand(time(NULL));
@@ -613,7 +613,7 @@ void getmaze(int n)
 		{
 			maze[++a][b]=WAY;i--;
 		}
-	}/*Ëæ»úÉú³ÉÒ»ÌõÍ¨ÏòÖÕµãµÄÂ·¾¶*/
+	}/*éšæœºç”Ÿæˆä¸€æ¡é€šå‘ç»ˆç‚¹çš„è·¯å¾„*/
 	for(i=1;i<n-1;i++)
 	{
 		for(j=1;j<n-1;j++)
@@ -623,7 +623,7 @@ void getmaze(int n)
 				maze[i][j]=rand()%2;
 			}
 		}
-	}/*±¾À´ÆäËûµØ·½¶¼ÊÇ0£¬Â·¾¶ÊÇ1£¬ÏÖÔÚ°Ñ³ıÁË×îÍâÈ¦Î§Ç½ÒÔÍâµÄ²¿·ÖËæ»úÉèÎª0»ò1*/
+	}/*æœ¬æ¥å…¶ä»–åœ°æ–¹éƒ½æ˜¯0ï¼Œè·¯å¾„æ˜¯1ï¼Œç°åœ¨æŠŠé™¤äº†æœ€å¤–åœˆå›´å¢™ä»¥å¤–çš„éƒ¨åˆ†éšæœºè®¾ä¸º0æˆ–1*/
 }
 
 /**
