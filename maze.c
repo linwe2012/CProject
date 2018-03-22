@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include <time.h>
 #include<stdlib.h>
+#include<windows.h>
 
 #define CLEAR 1
 #define BLOCK 0
@@ -107,20 +108,22 @@ int testIsolateCell(int x,int y,int edge,int step ){
 #endif
 
 
-void drawMap(int  maxLine,int Enter){
+void drawMap(int  maxLine, HANDLE handle, int Enter){
 	int i,j;
 	
 	for(i=0;i<maxLine;i++){
 		for(j=0;j<maxLine;j++){
 			//printf("%d ",maze[i][j]);
 			if(maze[i][j] >= 2){
-				printf("%c",'o');
+				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_GREEN);
+				printf("%c%c",161,239);
 			}
 			if(maze[i][j] == CLEAR){
-				printf(" ");
+				printf("%c%c",165,254);
 			}
 			if(maze[i][j] == BLOCK){
-				printf("%c",'#');
+				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_BLUE);
+				printf("%c%c",161,246);
 			}
 		}
 		printf("\n");
@@ -442,23 +445,26 @@ int generateMaze_prim(int edge){
 		visit[x][y] = 1;
 		//printf("new while prepared , current listLen= %d, tempVisit = %d\n",listLen,tempVisit);
 		//if((visit[x-1][y]==1 || visit[x+1][y] == 1) || (maze[x][y-1]==1 && maze[x][y-1]==1)){
-				for(i=0;i<4;i++){
+				for (i=0;i<4;i++){
 					x = visiting->x + move[i].x;
 					y = visiting->y + move[i].y;
 					
-					if(maze[x][y] == CLEAR && visit[x][y] == 0){
+					if (maze[x][y] == CLEAR && visit[x][y] == 0){
 						maze[visiting->x][visiting->y] = CLEAR;
 						clear_x = x;
 						clear_y = y;
 						visit[clear_x][clear_y] = 1;
-						for(i=0;i<4;i++){
+						for (i=0;i<4;i++){
 							x = clear_x + move[i].x;
 							y = clear_y + move[i].y;
-							if(maze[x][y] == BLOCK && visit[x][y] == 0){
+							if (maze[x][y] == BLOCK && visit[x][y] == 0){
 								//printf("ready to add node, current listLen = %d\n",listLen);
 								addList(x,y);
 								//printf("node added, current listLen = %d\n",listLen);
 								//checkList();
+							}
+							else{
+								;
 							}
 						};
 						break;
@@ -540,6 +546,8 @@ void solutionToMaze(){
 }
 int main()
 {
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    system ("color 0b");
 	int i;
 	int maxLine;
 	int genMethod;
@@ -549,16 +557,15 @@ int main()
 		if(maxLine<=0){
 			return 0;
 		}
-		iniData();
-		
-		start.x = start.y = 0;
-		end.x = end.y = maxLine-1;
-		
+	
 		while(1){
 		printf("Choose maze generation method: 0.change the size    1.random     2.prim.\n");
 		scanf("%d",&genMethod);
 			if(genMethod == 1 || genMethod == 2){
-				
+				iniData();
+		
+				start.x = start.y = 0;
+				end.x = end.y = maxLine-1;
 				if(genMethod == 2){
 					generateMaze_prim(maxLine);
 					if(maxLine%2 == 0){
@@ -569,11 +576,11 @@ int main()
 					getmaze(maxLine);
 				}
 				
-				
 				#if DEBUG
 				ptmap(maxLine);
 				#endif
-				drawMap(maxLine,2);
+				
+				drawMap(maxLine, handle, 2);
 				iniDfs(maxLine);
 				
 				//printf("iniVisit Finished\n");
@@ -583,7 +590,7 @@ int main()
 				
 				getchar();
 				getchar();
-				drawMap(maxLine,3);
+				drawMap(maxLine, handle, 3);
 			}
 			else if(genMethod == 0){
 				break;
