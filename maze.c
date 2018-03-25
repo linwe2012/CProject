@@ -130,7 +130,7 @@ int testIsolateCell(int x,int y,int edge,int step ){
 }
 #endif 
 
-
+/*display the maze*/
 void drawMap(int  maxLine, HANDLE handle, int Enter){
 	int i,j;
 	
@@ -139,7 +139,8 @@ void drawMap(int  maxLine, HANDLE handle, int Enter){
 #if DEBUG
 printf("%d ",maze[i][j]);
 #endif
-			if (maze[i][j] >= 2){
+                        /*display varied figures as the value of maze change*/
+			if (maze[i][j] == DESTINATION || maze[i][j] == WAY){
 				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 				printf("%c%c",161,239);
 			}
@@ -594,8 +595,9 @@ void getmaze(int n)
 {
 	int i,j,a,b;	
 	i=n;j=n;a=1;b=1;
-	maze[a][b]=WAY;/*入口*/ 
+	maze[a][b]=WAY;/*鍏ュ彛*/ 
 	start.x = a; start.y = b;
+	end.x = n-2; end.y= n-2;
 	
 	srand(time(NULL));
     while (i>3||j>3){
@@ -615,7 +617,7 @@ void getmaze(int n)
 		{
 			maze[++a][b]=WAY;i--;
 		}
-	}/*随机生成一条通向终点的路径*/
+	}/*Randomly generate a path to the end*/
 	for(i=1;i<n-1;i++)
 	{
 		for(j=1;j<n-1;j++)
@@ -625,7 +627,8 @@ void getmaze(int n)
 				maze[i][j]=rand()%2;
 			}
 		}
-	}/*本来其他地方都是0，路径是1，现在把除了最外圈围墙以外的部分随机设为0或1*/
+	}/*The former value of the maze: blocks is 0, the path is 1.
+	Now the rest part except the outer ring wall is randomly set to 0 or 1.*/
 }
 
 /**
