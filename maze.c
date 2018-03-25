@@ -28,7 +28,8 @@ int visit[MAX][MAX];/*visited 1, unvisited 2*/
 struct vector{
 	int x;
 	int y;
-}solution[MAX][MAX*MAX],start,end,move[4];
+}solution[MAX*MAX][MAX*MAX],start,end,move[4];
+int DFS_Flag;
 
 /*@note: operations with lists are none of others' business but functions executing prim algorithm
 */
@@ -108,12 +109,11 @@ void ptmap(int maxLine){
 * @brief: testing whether the cell is blocked within steps;
 * @param [in] x,y: position of the cell
 * @param [in] edge: the size of the maze
-
 * @return 1: it is block within the steps;
 * @exception 
 * @note
 */
-void 
+//void 
 int testIsolateCell(int x,int y,int edge,int step ){
 	int i;
 	if (step == 0){
@@ -173,7 +173,6 @@ void iniSolution(){
 
 /**
 * @brief: initialize the data including: Block all cell, set move value, set Solutions to -1;
-
 * @exception 
 * @note
 */
@@ -196,7 +195,6 @@ void iniData(){
 /**
 * @brief: initialize the visit[][], set the boundries visited
 * @param [in] edge: the size of the maze
-
 * @exception 
 * @note
 */
@@ -222,7 +220,6 @@ void iniVisit(int edge){
           making starting point & destination accesible by setting its & its neighbor's visit value to 0;
           
 * @param [in] edge: the size of the maze
-
 * @exception 
 * @note
 */
@@ -244,6 +241,7 @@ void iniDfs(int edge){
 			visit[x1][y1] = 0;
 		}
 	}
+	DFS_Flag = 0;
 }
 
 /////////find the way out///////////////////////////////////////////////////////////////////////////
@@ -261,6 +259,7 @@ printf("In it\n");
 printf("find one!\n");
 #endif 
 		//drawMap(edge,2);
+		DFS_Flag = 1;
 		return;
 	}
 	
@@ -285,6 +284,9 @@ printf("nextpath found\n");
 ptMap(edge,2);
 #endif
 			dfs(x1,y1,edge);
+			if(DFS_Flag == 1){
+				return;
+			}
 			visit[x1][y1] = 0;
 			if (sol_col>0){
 				sol_col--;
@@ -329,24 +331,14 @@ void oddNumberFixer(int edge){
 }
 
 /**
-* @brief: prepare for prim: setting cells as clear and surrounded by walls
-							initialize visit[][] & phead & ptail
+* @brief: make sure the starting point & destination and their neighbors are accessible
 * @param [in] edge: the size of the maze
-
 * @exception 
 * @note
 */
-void prePrim(int edge){
-	int i,j;
-	for(i = 1;i<edge-1;i+=2){
-		for(j=1;j<edge-1;j+=2){
-			maze[i][j] = CLEAR;
-		}
-		
-	}
-	
-	maze[start.x][start.y] = CLEAR;
-	maze[end.x][end.y] = DESTINATION;
+void makeWayforStartAndDestination(int edge){
+		maze[start.x][start.y] = CLEAR;
+		maze[end.x][end.y] = DESTINATION;
 	/*make sure there is a way*/
 		if (start.x == 0){
 			maze[start.x+1][start.y] = CLEAR;
@@ -376,6 +368,26 @@ void prePrim(int edge){
 		else if (end.y == 0){
 			maze[end.x][end.y+1] = CLEAR;
 		}
+}
+
+/**
+* @brief: prepare for prim: setting cells as clear and surrounded by walls
+							initialize visit[][] & phead & ptail
+* @param [in] edge: the size of the maze
+* @exception 
+* @note
+*/
+void prePrim(int edge){
+	int i,j;
+	for(i = 1;i<edge-1;i+=2){
+		for(j=1;j<edge-1;j+=2){
+			maze[i][j] = CLEAR;
+		}
+		
+	}
+	
+	makeWayforStartAndDestination(edge);
+
 #if DEBUG >= 2
 ptmap(edge);
 #endif
@@ -478,8 +490,6 @@ struct lists *getlistinfo(int position){
 /**
 * @brief: generate maze
 * @param [in] edge: the size of the maze
-
-
 * @exception 
 * @note
 *1.Start with a grid full of walls.
@@ -587,53 +597,54 @@ checkList();
 /**
 * @brief: 
 * @param [in] n: 
-
 * @exception 
 * @note
 */
 void getmaze(int n) 
 {
 	int i,j,a,b;	
-	i=n;j=n;a=1;b=1;
-	maze[a][b]=WAY;/*å…¥å£*/ 
+	i=n;j=n;a=0;b=0;
+	maze[a][b]=CLEAR;/*Èë¿Ú*/ 
 	start.x = a; start.y = b;
-	end.x = n-2; end.y= n-2;
+	end.x = n-1; end.y= n-1;
+	maze[end.x][end.y] = CLEAR;
 	
 	srand(time(NULL));
-    while (i>3||j>3){
-    	if(i==3)
+    while (i>1||j>1){
+    	if(i==1)
     	{
-    		maze[++a][b]=WAY;i--;
+    		maze[a][++b]=CLEAR;j--;
 		}
-		else if(j==3)
+		else if(j==1)
 		{
-			maze[a][++b]=WAY;j--;
+			maze[++a][b]=CLEAR;i--;
 		}
 		else if(rand()%2==1)
     	{
-    		maze[a][++b]=WAY;j--;
+    		maze[a][++b]=CLEAR;j--;
 		}
 		else
 		{
-			maze[++a][b]=WAY;i--;
+			maze[++a][b]=CLEAR;i--;
 		}
 	}/*Randomly generate a path to the end*/
 	for(i=1;i<n-1;i++)
 	{
 		for(j=1;j<n-1;j++)
 		{
-			if(maze[i][j]!=1)
+			if(maze[i][j]!=CLEAR)
 			{
 				maze[i][j]=rand()%2;
 			}
 		}
 	}/*The former value of the maze: blocks is 0, the path is 1.
 	Now the rest part except the outer ring wall is randomly set to 0 or 1.*/
+	makeWayforStartAndDestination(n);
+	oddNumberFixer(n);
 }
 
 /**
 * @brief: put solutions into the maze array;
-
 * @exception 
 * @note
 */
@@ -730,5 +741,4 @@ printf("dfs Finished\n");
 	}
 	return 0; 
 } 
-
 
