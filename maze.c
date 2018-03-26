@@ -185,9 +185,9 @@ void iniData(){
 		}
 	}
 	move[0].x = 1;  move[0].y = 0;  //right
-	move[1].x = -1; move[1].y = 0;  //left
-	move[2].x = 0;  move[2].y = 1;  //up
-	move[3].x = 0;  move[3].y = -1; //down
+	move[1].x = 0;  move[1].y = -1; //down
+	move[2].x = -1; move[2].y = 0;  //left
+	move[3].x = 0;  move[3].y = 1;  //up
 	
 	iniSolution();
 }
@@ -195,10 +195,11 @@ void iniData(){
 /**
 * @brief: initialize the visit[][], set the boundries visited
 * @param [in] edge: the size of the maze
+* @param [in] edgeClosed: whether the boundries should be set visited
 * @exception 
 * @note
 */
-void iniVisit(int edge){
+void iniVisit(int edge, int edgeClosed){
 	int i,j;
 	
 	for(i = 1;i<MAX;i++){
@@ -207,11 +208,13 @@ void iniVisit(int edge){
 
 		}
 	}
-	for(i = 0;i<edge;i++){
-		visit[0][i] = 1;
-		visit[i][0] = 1;
-		visit[edge-1][i] = 1;
-		visit[i][edge-1] = 1;
+	if(edgeClosed == 1){
+		for(i = 0;i<edge;i++){
+			visit[0][i] = 1;
+			visit[i][0] = 1;
+			visit[edge-1][i] = 1;
+			visit[i][edge-1] = 1;
+		}
 	}
 }
 
@@ -226,9 +229,10 @@ void iniVisit(int edge){
 void iniDfs(int edge){
 	int x,y,x1,y1;
 	int i;
-	iniVisit(edge);
+	iniVisit(edge, 0);
 	visit[start.x][start.y] = 0;
 	visit[end.x][end.y] = 0;
+	
 	for(i=0;i<4;i++){
 		x = end.x + move[i].x ;
 		y = end.y + move[i].y ;
@@ -250,12 +254,14 @@ void iniDfs(int edge){
 * @param [in] edge: the size of the maze
 * @param [in] x: current position
 * @param [in] y: current position
+* return 0: find a solution
+* return -1:fails to find one
 * @exception 
 * @note: DFS_Flag = 1 indicates one solution if found;
 *        when there is no solution ,it will crash
 */
 
-void dfs(int x,int y,int edge)
+int dfs(int x,int y,int edge)
 {
 	int i,x1,y1;
 #if DEBUG >= 2
@@ -270,7 +276,7 @@ printf("find one!\n");
 #endif 
 
 		DFS_Flag = 1;
-		return;
+		return 0;
 	}
 	
 	
@@ -284,7 +290,7 @@ printf("start for\n");
 printf("In for %d \n",i);
 #endif
 		/*trying each diretions*/
-		if (x1>=0&&y1>=0&&x1<edge&&y1<edge &&visit[x1][y1] == 0 && maze[x1][y1] != BLOCK){
+		if (x1>=0&&y1>=0&&x1<edge&&y1<edge && visit[x1][y1] == 0 && maze[x1][y1] != BLOCK){
 			solution[sol_row][sol_col].x  = x1;
 			solution[sol_row][sol_col].y  = y1;
 			sol_col++;
@@ -296,7 +302,7 @@ ptMap(edge,2);
 #endif
 			dfs(x1,y1,edge);
 			if(DFS_Flag == 1){
-				return;
+				return 0;
 			}
 			visit[x1][y1] = 0;
 			if (sol_col>0){
@@ -308,6 +314,12 @@ ptMap(edge,2);
 #if DEBUG >=2
 printf("fail,withdraw\n");
 #endif
+	if(DFS_Flag == 1){
+		return 0;
+	}
+	else{
+		return -1;
+	}
 }
 
 
@@ -403,7 +415,7 @@ void prePrim(int edge){
 ptmap(edge);
 #endif
 	
-	iniVisit(edge);
+	iniVisit(edge, 1);
 
 	listLen = 0;
 	phead = ptail = NULL;
@@ -720,7 +732,12 @@ ptmap(maxLine);
 #if DEBUG >= 2				
 printf("iniVisit Finished\n");
 #endif
-				dfs(start.x,start.y,maxLine);
+				if(dfs(start.x,start.y,maxLine) == -1){
+					printf("Ooops, it seems there is no solution to the maze... Try again?\n");
+					getchar();
+					continue;
+				}
+				
 #if DEBUG >= 2
 printf("dfs Finished\n");
 #endif
