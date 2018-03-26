@@ -244,7 +244,17 @@ void iniDfs(int edge){
 	DFS_Flag = 0;
 }
 
-/////////find the way out///////////////////////////////////////////////////////////////////////////
+
+/**
+* @brief: initialize the visit[][], set the boundries visited
+* @param [in] edge: the size of the maze
+* @param [in] x: current position
+* @param [in] y: current position
+* @exception 
+* @note: DFS_Flag = 1 indicates one solution if found;
+*        when there is no solution ,it will crash
+*/
+
 void dfs(int x,int y,int edge)
 {
 	int i,x1,y1;
@@ -258,7 +268,7 @@ printf("In it\n");
 #if  DEBUG
 printf("find one!\n");
 #endif 
-		//drawMap(edge,2);
+
 		DFS_Flag = 1;
 		return;
 	}
@@ -273,6 +283,7 @@ printf("start for\n");
 #if DEBUG >= 3
 printf("In for %d \n",i);
 #endif
+		/*trying each diretions*/
 		if (x1>=0&&y1>=0&&x1<edge&&y1<edge &&visit[x1][y1] == 0 && maze[x1][y1] != BLOCK){
 			solution[sol_row][sol_col].x  = x1;
 			solution[sol_row][sol_col].y  = y1;
@@ -302,7 +313,7 @@ printf("fail,withdraw\n");
 
 
 ///////Maze Generator////////////////////////////////////////////////////////////////////////////////
-void oddNumberFixer(int edge){
+void evenNumberFixer(int edge){
 	int i;
 	int seed;
 	for(i = 1;i<edge-1;i++){
@@ -500,7 +511,8 @@ struct lists *getlistinfo(int position){
 *		2.Add the neighboring walls of the cell to the wall list.
 *	2.Remove the wall from the list.
 *
-*  using algorithms illustrated in: https://en.wikipedia.org/wiki/Maze_generation_algorithm
+*  using algorithms illustrated at: https://en.wikipedia.org/wiki/Maze_generation_algorithm
+* it will have problems with even numbers(last but one row & column won't have any accessible cell , so evenNumberFixer is used to address the problem
 */
 int generateMaze_prim(int edge){
 	struct vector nstart;
@@ -640,7 +652,7 @@ void getmaze(int n)
 	}/*The former value of the maze: blocks is 0, the path is 1.
 	Now the rest part except the outer ring wall is randomly set to 0 or 1.*/
 	makeWayforStartAndDestination(n);
-	oddNumberFixer(n);
+	evenNumberFixer(n);
 }
 
 /**
@@ -694,7 +706,7 @@ int main()
 				if (genMethod == 2){
 					generateMaze_prim(maxLine);
 					if (maxLine%2 == 0){
-						oddNumberFixer(maxLine);
+						evenNumberFixer(maxLine);
 					}
 				}
 				else{
