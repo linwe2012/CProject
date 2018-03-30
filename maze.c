@@ -2,6 +2,9 @@
 #include <time.h>
 #include<stdlib.h>
 #include<windows.h>
+#include<tchar.h>
+#include <commdlg.h>
+#include<conio.h>
 
 #define CLEAR 1
 #define BLOCK 0
@@ -12,6 +15,7 @@
 #define MAX 100
 #define MIN 2
 #define DEBUG 0
+#define DEMO 0
 
 /*
 * DEBUG MODES:
@@ -130,6 +134,8 @@ int testIsolateCell(int x,int y,int edge,int step ){
 }
 #endif 
 
+
+
 /*display the maze*/
 void drawMap(int  maxLine, HANDLE handle, int Enter){
 	int i,j;
@@ -140,7 +146,7 @@ void drawMap(int  maxLine, HANDLE handle, int Enter){
 printf("%d ",maze[i][j]);
 #endif
                         /*display varied figures as the value of maze change*/
-			if (maze[i][j] == DESTINATION || maze[i][j] == WAY){
+			if (maze[i][j] == DESTINATION || maze[i][j] == WAY || maze[i][j] == START){
 				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 				printf("%c%c",161,239);
 			}
@@ -158,7 +164,7 @@ printf("%d ",maze[i][j]);
 		printf("\n");
 	}
 }
-
+ 
 
 void iniSolution(){
 	int i,j,max = MAX*MAX;
@@ -205,7 +211,6 @@ void iniVisit(int edge, int edgeClosed){
 	for(i = 1;i<MAX;i++){
 		for(j=1;j<MAX;j++){
 			visit[i][j] = 0;
-
 		}
 	}
 	if(edgeClosed == 1){
@@ -402,11 +407,11 @@ void makeWayforStartAndDestination(int edge){
 */
 void prePrim(int edge){
 	int i,j;
+	
 	for(i = 1;i<edge-1;i+=2){
 		for(j=1;j<edge-1;j+=2){
 			maze[i][j] = CLEAR;
 		}
-		
 	}
 	
 	makeWayforStartAndDestination(edge);
@@ -419,13 +424,20 @@ ptmap(edge);
 
 	listLen = 0;
 	phead = ptail = NULL;
+#if DEMO
+HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+system ("color 0b");
+drawMap(edge,handle,5);
+#endif
 }
+
 void newList(int x,int y){
 	ptail = phead = (struct lists *) malloc (sizeof(struct lists));
 	phead->next = NULL;
 	phead->x = x;
 	phead->y = y;
 	listLen = 1;
+
 }
 
 void addList(int x,int y){
@@ -536,7 +548,6 @@ int generateMaze_prim(int edge){
 	prePrim(edge);
 	
 	/*the first random cell*/
-	
 	clear_x=nstart.x = rand() % (edge-1) / 2 * 2 + 1;
 	clear_y=nstart.y = rand() % (edge-1) / 2 * 2 + 1;
 	if (nstart.x == edge){
@@ -613,8 +624,20 @@ printf("afterdel,liseLen = %d\n",listLen);
 ptmap(edge);
 checkList();
 #endif
+
+#if DEMO >= 2
+HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+system ("color 0b");
+drawMap(edge,handle,5);
+#endif
 	}
+
 	maze[start.x][start.y] = START;
+#if DEMO >= 2
+HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+printf("Prim Algorithm is Finished. Start = (%d, %d)\n\n",start.x,start.y);
+drawMap(edge,handle,5);
+#endif
 }
 
 
@@ -679,20 +702,87 @@ void solutionToMaze(){
 		i++;
 	}
 }
+
+int Move(char ch, int maxline, struct vector *pos)
+{
+	if(pos->x != start.x && pos->y != start.y && pos->x != end.x && pos->y != end.y)
+		maze[pos->x][pos->y] = CLEAR;
+	switch(ch)
+	{
+		case 'w': case 'W': {
+			if(maze[pos->x-1][pos->y] != BLOCK && pos->x > 0) (pos->x)--;
+			break;
+		}
+		case 's': case 'S': {
+			if(maze[pos->x+1][pos->y] != BLOCK && pos->x < maxline-1) (pos->x)++;
+			break;
+		}
+		case 'a': case 'A': {
+			if(maze[pos->x][pos->y-1] != BLOCK && pos->y > 0) (pos->y)--;
+			break;
+		}
+		case 'd': case 'D': {
+			if(maze[pos->x][pos->y+1] != BLOCK && pos->y < maxline-1) (pos->y)++;
+			break;
+		}
+	}
+	if(pos->x != start.x && pos->y != start.y && pos->x != end.x && pos->y != end.y)
+		maze[pos->x][pos->y] = WAY;
+	if(pos->x == end.x && pos->y == end.y)return 1;
+	else return 0;
+}
+
+int solveMaze(int edge){
+	char ch;
+	struct vector pos;
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	pos.x = start.x;
+	pos.y = start.y;
+	fflush(stdin);
+	while((ch = getch()) != '\n' && (ch) != '\r'){
+		if(Move(ch, edge, &pos) == 1){
+			printf("Congratulations!\n");
+			return 1;
+		}
+		else{
+			system("cls");
+			printf("U R working on a %d * %d maze.\n",edge, edge);
+			printf("Press Enter to see the answer.\n");
+			drawMap(edge, handle, 0);
+		}
+	}
+	maze[pos.x][pos.y] = CLEAR;
+	printf("\n\n\n");
+	return 0;
+}
+
+
 int main()
 {
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	HWND hwnd = GetForegroundWindow();
     system ("color 0b");
 	int i;
 	int maxLine;
 	int genMethod;
+	if(SetWindowTextA(hwnd, "Maze Generate & Solve") == 0){
+    	printf("Fails to set Windows Title.\n");
+	}
 	srand(time(NULL));
 	while (1){
-		printf("Input the size of the Input any non-positive number to end.\n");
+		printf("Input the size of the maze. Input any negative number to end.\n");
+		printf("Input 0 to View the Code at Github.com.\n");
 		scanf("%d",&maxLine);
-		if(maxLine<=0){
+		if(maxLine < 0){
 			return 0;
 		}
+		else if(maxLine == 0){
+			ShellExecute(NULL,"open","https://github.com/linwe2012/CProject",NULL,NULL,SW_SHOWNORMAL);
+			MessageBox(NULL,"If You Find any Bugs, DON'T be shy to Label Issues.","Thanks For Visiting.",MB_OK);
+			printf("\n\n");
+			continue;
+		}
+
 		else if(maxLine <= MIN){
 			i = rand() % 4;
 			if(i == 0)
@@ -738,13 +828,15 @@ printf("iniVisit Finished\n");
 					continue;
 				}
 				
+				
 #if DEBUG >= 2
 printf("dfs Finished\n");
 #endif
+				getchar();
+				printf("Press Enter to see the answer.\n");
+				solveMaze(maxLine);
 				solutionToMaze();
-				
-				getchar();
-				getchar();
+
 				drawMap(maxLine, handle, 3);
 			}
 			else if (genMethod == 0){
