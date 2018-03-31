@@ -742,22 +742,22 @@ void printTime(double rawTime){
 }
 int Move(char ch, int maxline, struct vector *pos)
 {
+	int arrowKey;
 	if(!(pos->x == start.x && pos->y == start.y) && !(pos->x == end.x && pos->y == end.y))
 		maze[pos->x][pos->y] = CLEAR;
-	switch(ch)
-	{
 		
-		//case -32:{
-			//ch = getch();
-			switch(ch)
+	if(ch == -32){
+		arrowKey = getch();
+			switch(arrowKey)
 			{
 				case 72: ch = 'w';break;
 				case 80: ch = 's';break;
 				case 75: ch = 'a';break;
 				case 77: ch = 'd';break;
 			}
-			/*there is no need to break*/
-		//}
+	}
+	switch(ch)
+	{
 		case 'w': case 'W': {
 			if(maze[pos->x-1][pos->y] != BLOCK && pos->x > 0) (pos->x)--;
 			break;
