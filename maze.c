@@ -2,8 +2,6 @@
 #include <time.h>
 #include<stdlib.h>
 #include<windows.h>
-#include<tchar.h>
-#include <commdlg.h>
 #include<conio.h>
 
 #define CLEAR 1
@@ -32,7 +30,7 @@ int visit[MAX][MAX];/*visited 1, unvisited 2*/
 struct vector{
 	int x;
 	int y;
-}solution[MAX*MAX][MAX*MAX],start,end,move[4];
+}solution[MAX][MAX*MAX],start,end,move[4];
 int DFS_Flag;
 
 /*@note: operations with lists are none of others' business but functions executing prim algorithm
@@ -695,20 +693,71 @@ void getmaze(int n)
 * @exception 
 * @note
 */
-void solutionToMaze(){
+void solutionToMaze(int solutionLine){
 	int i = 0;
-	while (solution[0][i].x != end.x  || solution[0][i].y != end.y){
-		maze[solution[0][i].x][solution[0][i].y] = WAY;
+	while (solution[solutionLine][i].x != end.x  || solution[solutionLine][i].y != end.y){
+		maze[solution[solutionLine][i].x][solution[solutionLine][i].y] = WAY;
 		i++;
 	}
 }
 
+int judgeNumberVowel(int n)
+{
+	while(n>10){
+		n /= 10;
+	}
+	if(n == 8){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+void printTime(double rawTime){
+	long long int sec, min, hour;
+	rawTime /= CLOCKS_PER_SEC;
+	sec = (long long int) rawTime;
+	hour = min =0;
+	if(sec >= 60){
+		min = sec / 60;
+		sec /= 60;
+		if(min >= 60){
+			hour /= min / 60;
+			min /= 60;
+		}
+	}
+	if(hour > 24){
+		printf("Astonishing. More than one day!");
+	}
+	else{
+		printf("It takes you ");
+		if(hour > 0){
+			printf("%dh ",hour);
+		}
+		if(min > 0 || hour > 0){
+			printf("%dmin ",min);
+		}
+		printf("%dsec to finish your Maze.\n\n",sec);
+	}
+}
 int Move(char ch, int maxline, struct vector *pos)
 {
-	if(pos->x != start.x && pos->y != start.y && pos->x != end.x && pos->y != end.y)
+	if(!(pos->x == start.x && pos->y == start.y) && !(pos->x == end.x && pos->y == end.y))
 		maze[pos->x][pos->y] = CLEAR;
 	switch(ch)
 	{
+		
+		//case -32:{
+			//ch = getch();
+			switch(ch)
+			{
+				case 72: ch = 'w';break;
+				case 80: ch = 's';break;
+				case 75: ch = 'a';break;
+				case 77: ch = 'd';break;
+			}
+			/*there is no need to break*/
+		//}
 		case 'w': case 'W': {
 			if(maze[pos->x-1][pos->y] != BLOCK && pos->x > 0) (pos->x)--;
 			break;
@@ -726,7 +775,7 @@ int Move(char ch, int maxline, struct vector *pos)
 			break;
 		}
 	}
-	if(pos->x != start.x && pos->y != start.y && pos->x != end.x && pos->y != end.y)
+	if(!(pos->x == start.x && pos->y == start.y) && !(pos->x == end.x && pos->y == end.y))
 		maze[pos->x][pos->y] = WAY;
 	if(pos->x == end.x && pos->y == end.y)return 1;
 	else return 0;
@@ -735,24 +784,70 @@ int Move(char ch, int maxline, struct vector *pos)
 int solveMaze(int edge){
 	char ch;
 	struct vector pos;
+	int sol_col = 0;
+	int isVowel = judgeNumberVowel(edge);
+	double startTime, finishTime;
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	pos.x = start.x;
 	pos.y = start.y;
 	fflush(stdin);
+	startTime = clock();
 	while((ch = getch()) != '\n' && (ch) != '\r'){
+#if DEBUG >=1
+putch(ch);
+printf("  %d\n",ch);
+if(ch== -32){
+	ch = getch();
+	printf("  %d\n",ch);
+}
+getchar();getchar();getchar();getchar();
+#endif
+		if(ch == 'B' || ch == 'b'){
+			sol_col = 0;
+			maze[pos.x][pos.y] = CLEAR;
+			maze[start.x][start.y] = START;
+			pos.x = start.x;
+			pos.y = start.y;
+			system("cls");
+			printf("U R working on %s %d * %d maze.\n",isVowel?"an":"a", edge, edge);
+			printf("Press Enter to see the answer.\n");
+			printf("Hit B inorder to Start Over\n\n");
+			drawMap(edge, handle, 0);
+			continue;
+		}
 		if(Move(ch, edge, &pos) == 1){
-			printf("Congratulations!\n");
+			finishTime = clock();
+			printf("Congratulations! ");
+			printTime(finishTime - startTime);
+			sol_col++;
+			solution[MAX-1][sol_col].x = end.x; 
+			solution[MAX-1][sol_col].y = end.y;
 			return 1;
 		}
 		else{
 			system("cls");
-			printf("U R working on a %d * %d maze.\n",edge, edge);
+			printf("U R working on %s %d * %d maze.\n",isVowel?"an":"a", edge, edge);
 			printf("Press Enter to see the answer.\n");
+			printf("Hit B in order to Start Over.\n\n");
 			drawMap(edge, handle, 0);
 		}
+		if(solution[MAX-1][sol_col].x == pos.x && solution[MAX-1][sol_col].y == pos.y){
+			;
+		}
+		else if((solution[MAX-1][sol_col-1].x != pos.x || solution[MAX-1][sol_col-1].y != pos.y)){
+			sol_col++;
+			solution[MAX-1][sol_col].x = pos.x; 
+			solution[MAX-1][sol_col].y = pos.y;
+		}
+		else{
+			if(sol_col > 0){
+				sol_col--;
+			}
+		}
+		printf("solveMaze %d. UR cordination: x=%d, y=%d\n",sol_col,solution[MAX-1][sol_col].x,solution[MAX-1][sol_col].y);
 	}
 	maze[pos.x][pos.y] = CLEAR;
-	printf("\n\n\n");
+	printf("\n\n\nHere's the answer\n");
 	return 0;
 }
 
@@ -765,6 +860,7 @@ int main()
 	int i;
 	int maxLine;
 	int genMethod;
+	int solutionLine = 0;
 	if(SetWindowTextA(hwnd, "Maze Generate & Solve") == 0){
     	printf("Fails to set Windows Title.\n");
 	}
@@ -834,9 +930,12 @@ printf("dfs Finished\n");
 #endif
 				getchar();
 				printf("Press Enter to see the answer.\n");
-				solveMaze(maxLine);
-				solutionToMaze();
-
+				if(solveMaze(maxLine) == 1){
+					solutionLine = MAX - 1;
+				}
+				solutionToMaze(solutionLine);
+				solutionLine = 0;
+				
 				drawMap(maxLine, handle, 3);
 			}
 			else if (genMethod == 0){
