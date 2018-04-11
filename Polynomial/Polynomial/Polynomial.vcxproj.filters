@@ -15,15 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="IOControl.cpp">
+    <ClCompile Include="ListsData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ListsData.cpp">
+    <ClCompile Include="PolishReverse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IOControl.h">
+    <ClInclude Include="PolishReverse.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

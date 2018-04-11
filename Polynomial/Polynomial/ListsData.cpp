@@ -6,6 +6,7 @@
 typedef int PolyType;
 typedef char PolyVarType;
 
+/*
 struct Poly
 {
 	PolyType coeff;
@@ -15,12 +16,20 @@ struct Poly
 	struct Poly *son;
 };
 
+struct SinglePoly
+{
+	PolyType coeff;
+	PolyType degree;
+	PolyVarType var;
+};
+
 PolyVarType var[MAXVAR];
 struct Poly *head, pltail, prhead, prtail;
 
 struct Poly *initPoly()
 {
 	var[0] = -1;
+	
 }
 
 bool isNumber(char c)
@@ -79,12 +88,94 @@ struct Poly * checkDuplicte(struct Poly *phead, struct Poly *checkee)
 				else return phead;
 			}
 		}
-		phead = phead->next;
-		if (phead == NULL) {
-			return NULL;
+		if(flag != 0){
+			phead = phead->next;
+			if (phead == NULL) {
+				return NULL;
+			}
+		}
+	}
+	
+	
+}
+
+PolyType getNextNum(char *s, int *leap) {
+	PolyType num = 0;
+	PolyType denominator = 1;
+	*leap = 0;
+	while (*s != ' ') {
+		s++;
+		(*leap)++;
+	}
+		
+	while (isNumber(*s) == true) {
+		num = num * 10 + (*s) / denominator - '0';
+		while (*++s != ' ')
+			(*leap)++;
+		if (*s == '.' || denominator > 1) {
+			denominator = denominator * 10;
+			while (*++s != ' ')
+				(*leap)++;
+		}
+	}
+	return num;
+}
+
+PolyType calculator(char *s)
+{
+	
+}
+*/
+/*
+void varStringSorter(char *Variables) {
+	char *s = Variables;
+	char sorted[]
+	int i = 0, j;
+	while (var[i] != -1 && i < MAXVAR) {
+		s = Variables;
+		while (*s) {
+
 		}
 	}
 }
+
+void fractionDisassembler(char *s, struct Poly *fractionArray[MAXVAR])
+{
+	int flag;
+	int denominator = 1;
+	
+	if(*s == '(' )
+	{
+		*coeff = calculator(s);
+	}
+	else
+	{
+		if ((*s == '-')) {
+			flag = -1;
+			s++;
+		}
+		
+	}
+	while (*s != ' ')
+		s++;
+	while(isNumber(*s) == false && *s != '^'){
+	
+		if(isLetter(*s))
+		{
+			if (isNewVar(*s)) {
+
+			}
+		}
+		else{
+			printf("Unsupported Variable.\n");
+			exit(0);
+		}
+		while (*s != ' ')
+			s++;
+	}
+}
+
+
 
 struct Poly *addPoly(char *s, int direct, struct Poly *ptail)
 {
@@ -94,21 +185,12 @@ struct Poly *addPoly(char *s, int direct, struct Poly *ptail)
 
 	ptr = (struct Poly *) malloc(sizeof(struct Poly));
 	if (ptr == NULL) {
-		printf("Fail to add a node.\n")
+		printf("Fail to add a node.\n");
 	}
-	while (*s != ' ')
-		s++;
-	if ((*s == '-')) {
-		flag = -1;
-		s++;
-	}
-	while(isNumber(*s) == true ){
-		coeff = coeff * 10 + *s - '0';
-		while (*++s != ' ')
-			;
-	}
-	while (*s != ' ')
-		s++;
+	
+	
+	
+	
 	
 
-}
+}*/
