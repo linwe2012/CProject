@@ -1,21 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
-#define MAXVAR 26
+
 #define LEFT 1
 #define RIGHT 0
-typedef int PolyType;
-typedef char PolyVarType;
+
+
 
 /*
-struct Poly
-{
-	PolyType coeff;
-	PolyType degree;
-	PolyVarType var;
-	struct Poly *next;
-	struct Poly *son;
-};
-
 struct SinglePoly
 {
 	PolyType coeff;
@@ -23,7 +14,7 @@ struct SinglePoly
 	PolyVarType var;
 };
 
-PolyVarType var[MAXVAR];
+
 struct Poly *head, pltail, prhead, prtail;
 
 struct Poly *initPoly()

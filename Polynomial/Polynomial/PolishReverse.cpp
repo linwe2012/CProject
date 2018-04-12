@@ -25,9 +25,9 @@ static const char operatorPrioriy[OPERATOR_PRIORITY_LEVEL][OPERATOR_MAX_SAME_PRI
 																							 };
 int comparePriority(char a, char b);
 
-void initOperatorStack(operatorStack *s)
+void initOperatorStack(OperatorStack *s)
 {
-	s->base = (ElementType *)malloc(STACK_INI_SIZE * sizeof(operatorStack));
+	s->base = (OperatorType *)malloc(STACK_INI_SIZE * sizeof(OperatorType));
 	if (s == NULL) {
 		printf("Fails to initialize operator stack.\n");
 	}
@@ -36,12 +36,12 @@ void initOperatorStack(operatorStack *s)
 	s->stackSize = STACK_INI_SIZE;
 }
 
-void pushOperatorStack(operatorStack *s, ElementType op)
+void pushOperatorStack(OperatorStack *s, OperatorType op)
 {
 	int stackSize = s->stackSize;
 	if (s->top - s->base >= stackSize)
 	{
-		s->base = (ElementType *)realloc(s->base, (stackSize + STACK_INCRETMENT) * sizeof(operatorStack));
+		s->base = (OperatorType *)realloc(s->base, (stackSize + STACK_INCRETMENT) * sizeof(OperatorType));
 		if (s == NULL) {
 			printf("Fails to realloc operator stack.\n");
 		}
@@ -53,24 +53,24 @@ void pushOperatorStack(operatorStack *s, ElementType op)
 	s->top++;
 }
 
-void popOperatorStack(operatorStack *s, ElementType *op)
+void popOperatorStack(OperatorStack *s, OperatorType *op)
 {
 	if (s->top == s->base)
 		return;
 	*op = *--(s->top);
 }
 
-void deleteOperatorStack(operatorStack *s)
+void deleteOperatorStack(OperatorStack *s)
 {
 	free(s);
 }
 
-ElementType revealOperatorTop(operatorStack *s)
+OperatorType revealOperatorTop(OperatorStack *s)
 {
-	return *(s->top);
+	return *(s->top-1);
 }
 
-bool isEmptyOperatorStack(operatorStack *s) 
+bool isEmptyOperatorStack(OperatorStack *s)
 {
 	if (s->top == s->base) {
 		return true;
@@ -79,7 +79,7 @@ bool isEmptyOperatorStack(operatorStack *s)
 		return false;
 }
 
-int stackLen(operatorStack *s)
+int stackLen(OperatorStack *s)
 {
 	return (s->top - s->base);
 }
@@ -89,7 +89,7 @@ int stackLen(operatorStack *s)
 
 void initFragmentStack(FragmentStack *s)
 {
-	s->base = (FragmentType *)malloc(STACK_INI_SIZE * sizeof(FragmentStack));
+	s->base = (FragmentType *)malloc(STACK_INI_SIZE * sizeof(FragmentType));
 	if (s == NULL) {
 		printf("Fails to initialize Fragment stack.\n");
 	}
@@ -103,7 +103,7 @@ void pushFragmentStack(FragmentStack *s, FragmentType fragment)
 	int stackSize = s->stackSize;
 	if (s->top - s->base >= stackSize)
 	{
-		s->base = (FragmentType *)realloc(s->base, (stackSize + STACK_INCRETMENT) * sizeof(FragmentStack));
+		s->base = (FragmentType *)realloc(s->base, (stackSize + STACK_INCRETMENT) * sizeof(FragmentType));
 		if (s == NULL) {
 			printf("Fails to realloc Fragment stack.\n");
 		}
@@ -134,27 +134,29 @@ int stackLen(FragmentStack *s)
 }
 
 
-void RPN(char *s, operatorStack *op, FragmentStack *frag)
+void RPN(char *s, OperatorStack *op, FragmentStack *frag)
 {
-	ElementType temp_op = NULL;
+	OperatorType temp_op = NULL;
 	bool hasNumberBeforeOperator = false;
+	bool endStringFlag = false;
 
-	while (!isStringEnd(*s)) {
-		while (*s == ' ') {
-			s++;
-		}
+	while (!isStringEnd(*s) && !endStringFlag) {
 		/*push pointer to numbers & variables into the stack*/
-		if (isNumber(*s)) {
+		if (isOperator(*s) == false) {
 			pushFragmentStack(frag, s);
 			while (isOperator(*s) == false) {
 				s++;
-				while (*s == ' ') {
-					s++;
+				if (isStringEnd(*s)) {
+					endStringFlag = true;
+					break;
 				}
 			}
 			hasNumberBeforeOperator = true;
 		}
-		
+		if (endStringFlag) {
+			break;
+		}
+
 		switch (*s) {
 			case '(':{
 				pushOperatorStack(op, s);
@@ -171,31 +173,40 @@ void RPN(char *s, operatorStack *op, FragmentStack *frag)
 					if (!isEmptyOperatorStack(op)) {
 						popOperatorStack(op, &temp_op);
 					}
+					else
+					{
+						break;
+					}
 				}
 				break;
 			}
-			case '*': case'+': case'-': {
+			case '*': case'+': case'-': case'^': {
 				if (isEmptyOperatorStack(op)) {
-					pushOperatorStack(op, s);
-				}
-				temp_op = revealOperatorTop(op);
-				/* *s has a higher priority over *temp_op*/
-				if (*temp_op == '(' || *temp_op == ')' || comparePriority(*s, *temp_op) >= 1) {
 					pushOperatorStack(op, s);
 				}
 				else
 				{
-					
-					do {
-						popOperatorStack(op, &temp_op);
-						pushFragmentStack(frag, temp_op);
-						temp_op = revealOperatorTop(op);
-					} while (comparePriority(*s, *temp_op) < 1 && isEmptyOperatorStack(op));
-				}
-				/*
-				if (hasNumberBeforeOperator = false) {
+					temp_op = revealOperatorTop(op);
+					/* *s has a higher priority over *temp_op*/
+					if (*temp_op == '(' || *temp_op == ')' || comparePriority(*s, *temp_op) >= 1) {
+						pushOperatorStack(op, s);
+					}
+					else
+					{
+						if (!isEmptyOperatorStack(op)) {
+							do {
+								popOperatorStack(op, &temp_op);
+								pushFragmentStack(frag, temp_op);
+								temp_op = revealOperatorTop(op);
+							} while (!isEmptyOperatorStack(op) && comparePriority(*s, *temp_op) < 1);
+						}
+						pushOperatorStack(op, s);
+					}
+					/*
+					if (hasNumberBeforeOperator = false) {
 
-				}*/
+					}*/
+				}
 				break;
 			}
 			
@@ -218,7 +229,7 @@ bool isStringEnd(char c)
 }
 bool isOperator(char c) 
 {
-	if (c == '*' || c == '-' || c == '^' || c == '+') {
+	if (c == '*' || c == '-' || c == '^' || c == '+' || c == '(' || c == ')' || c == '^') {
 		return true;
 	}
 	else
@@ -260,9 +271,14 @@ void printRPN(FragmentStack *frag) {
 		s = *(moveable_Base);
 		printf("%c", *s);
 		while (!isOperator(*s)) {
-			printf("%c", *s);
 			s++;
+			if (isStringEnd(*s) || isOperator(*s)) {
+				break;
+			}
+			printf("%c", *s);
 		}
+		printf(" ");
 		(moveable_Base)++;
 	}
 }
+

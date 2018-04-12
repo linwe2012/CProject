@@ -115,12 +115,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Expression.cpp" />
+    <ClCompile Include="IOControl.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PolishReverse.cpp" />
     <ClCompile Include="ListsData.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Expression.h" />
+    <ClInclude Include="IOControl.h" />
+    <ClInclude Include="ListsData.h" />
     <ClInclude Include="PolishReverse.h" />
+    <ClInclude Include="PolyCalculator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

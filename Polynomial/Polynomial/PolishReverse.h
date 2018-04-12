@@ -2,13 +2,13 @@
 #define _POLISHREVERSE_H_
 
 #define EMPTY_OPERATOR 0
-typedef char* ElementType;
+typedef char* OperatorType;
 typedef struct
 {
-	ElementType *base;
-	ElementType *top;
+	OperatorType *base;
+	OperatorType *top;
 	int stackSize;
-}operatorStack;
+}OperatorStack;
 
 typedef char* FragmentType;
 typedef struct
@@ -23,8 +23,8 @@ bool isNumber(char c);
 bool isOperator(char c);
 bool isStringEnd(char c);
 
-void RPN(char *s, operatorStack *op, FragmentStack *frag);
-void initOperatorStack(operatorStack *s);
+void RPN(char *s, OperatorStack *op, FragmentStack *frag);
+void initOperatorStack(OperatorStack *s);
 void initFragmentStack(FragmentStack *s);
 void printRPN(FragmentStack *frag);
 
