@@ -5,13 +5,18 @@
 
 int newVar(char v, bool *isNewVar);
 PolyType getNextNum(char *s, int *leap);
+char varTable[MAXVAR];
+int ExpressionSize = sizeof(Expressions);
+int PolySize = sizeof(Poly);
 
+/*
 Expressions *newExpression(char *s, char *head){
 	Expressions *newexp = NULL;
 	//Poly *polyptr, *polyptr_last;
 	int leap;
 	//case like abc^8abc or abc^a88
-	if (*(s - 1) == '^' && s != head && isNumber(*s) != isNumber(*(s + 1)) && !isOperator(*(s + 1))) {
+	if (!isStringEnd(*(s + 1)) && !isOperator(*(s + 1)) && isNumber(*s) != isNumber(*(s + 1)) ||
+		!isStringEnd(*(s + 2)) && isVariable(*(s + 1)) && *(s + 2) == '^') {
 		if (isNumber(*s)) {
 			newexp = (Expressions *)malloc(ExpressionSize);
 			newexp->coeff = getNextNum(s, &leap);
@@ -45,6 +50,26 @@ Expressions *newExpression(char *s, char *head){
 
 	return newexp;
 }
+*/
+
+Expressions *newExpression(char *s, char *head) {
+	Expressions *newexp = NULL;
+	int leap;
+	newexp = (Expressions *)malloc(ExpressionSize);
+	if (isNumber(*s)) {
+		newexp->coeff = getNextNum(s, &leap);
+		newexp->next = NULL;
+		newexp->son = NULL;
+	}
+	else {
+		while (isVariable(*s)) {
+			addNewVariable(*s, newexp);
+			s++;
+		}
+	}
+	return newexp;
+}
+
 
 int newVar(char v, bool *isNewVar)
 {
@@ -100,41 +125,48 @@ void freeExpression(Expressions *head) {
 int addNewVariable(char var, Expressions *exp) {
 	bool isNewVar;
 	int varPriority = newVar(var, &isNewVar);
+	int flag = 0;
 	Poly *newVarNode, *ptr;
 	Poly *head = exp->son;
 
 	newVarNode = (Poly *)malloc(PolySize);
 	newVarNode->degree = 1;
+	newVarNode->son = NULL;
 	newVarNode->var = varPriority;
 
 	if (isNewVar == true) {
 		while (head->son != NULL) {
 			head = head->son;
 		}
-		newVarNode->son = NULL;
 	}
 	else {
-		
 		newVarNode = head;
 		if (head->var > varPriority) {
 			newVarNode->son = head;
 			exp->son = newVarNode;
 		}
 		else {
-			ptr = head;
-			while (head) {
+			ptr = head->son;
+			while (ptr) {
 				if (head->var == var) {
 					head->degree += 1;
+					free(newVarNode);
+					flag = 1;
 					break;
 				}
-				else if (ptr->var < varPriority && head->var > varPriority) {
-					newVarNode->son = head;
-					ptr->son = newVarNode;
+				else if (ptr->var > varPriority && head->var < varPriority) {
+					newVarNode->son = ptr;
+					head->son = newVarNode;
+					flag = 1;
 					break;
 				}
 				else {
-					head = head->son;
+					head = ptr;
+					ptr = ptr->son;
 				}
+			}
+			if (flag == 0) {
+				head->son = newVarNode;
 			}
 		}
 		

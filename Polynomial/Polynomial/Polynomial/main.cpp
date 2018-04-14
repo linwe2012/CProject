@@ -1,26 +1,33 @@
 #include <stdio.h>
+#include <windows.h>
 #include "PolishReverse.h"
 #include "IOControl.h"
 #include "command.h"
+#include "ExpressionSet.h"
 
 int analysisString(char *s);
+void initialCongratulate();
 
 int main()
 {
 	OperatorStack opStack;
 	FragmentStack fragStack;
+	ExpresionBuffer expBuffer;
 	char buffer[MAX_BUFFER];
-	int i;
+	int i = 0;
 	
 	initCommand();
+	initialCongratulate();
+	initExpressionBuffer(&expBuffer);
+
 
 	while (1) {
 		fgets(buffer, MAX_BUFFER, stdin);
-		i = 0;
-		while (buffer[i] == ' ')
-			i++;
 		if (*buffer == '\\') {
-			cmdDealer(buffer + i);
+			i = cmdDealer(buffer + 1, &expBuffer);
+			if (i >= 0) {
+				//printExpressionID(&expBuffer);
+			}
 		}
 		else {
 			if (analysisString(buffer) == 0) {
@@ -44,21 +51,32 @@ int analysisString(char *s) {
 	}
 	else
 	{
-		if ((temp = parentheseCherker(s) )!= 0) {
-			if (temp > 0) {
-				printf("Expected right parenthese ')'.\n");
-			}
-			else 
-				printf("Expected left parenthese '('.\n");
-			return -1;
-		}
-
+		
 		if (cmd_autoCorrect == CMD_TRUE) {
 			expressionAutoCorrector(s);
 		}
-		else {
+		temp = parentheseCherker(s);
+		if (cmd_autoParenthese == CMD_TRUE) {
+			if ((temp = parentheseAutoAdder(s, temp, MAX_BUFFER)) == -1) {
+				return -1;
+			}
+			else if(temp == 1)
+			{
+				throwError("analysisString::Elements are auto added. the Expresion is currently:\n", GREY);
+				puts(s);
+			}
+		}
+		else if (temp != 0) {
+			if (temp > 0)
+				throwError("analysisString::Expected right parenthese ')'.\n", GREY);
+			else
+				throwError("analysisString::Expected left parenthese '('.\n", GREY);
+			return -1;
+		}
+
+		if(cmd_autoCorrect == CMD_FALSE || cmd_autoParenthese == CMD_FALSE) {
 			if (stringLegalchecker(s) != 0) {
-				printf("The expression contains illegal charater. Input again or turn on auto corrector\n");
+				throwError("analysisString::The expression contains illegal charater. Input again or turn on auto corrector\n", GREY);
 				return -1;
 			}
 			else {
@@ -69,3 +87,34 @@ int analysisString(char *s) {
 	return 0;
 }
 
+void initialCongratulate() 
+{
+	printf("You can input any exprssion.\n");
+	printf("Operators this program supports: ");
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), LIGHT_BLUE);
+	printf("-");
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+	printf(", ");
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), LIGHT_BLUE);
+	printf("+");
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+	printf(", ");
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), LIGHT_BLUE);
+	printf("*");
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+	printf(", ");
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), LIGHT_BLUE);
+	printf("^");
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+	printf(".\n");
+	printf("If you have input anything wrong, the program will try to correct it\n");
+	printf("Type in \'\\help\' to get setting list.\n");
+}

@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClCompile Include="command.cpp" />
     <ClCompile Include="Expression.cpp" />
+    <ClCompile Include="ExpressionSet.cpp" />
     <ClCompile Include="IOControl.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PolishReverse.cpp" />
@@ -125,6 +126,7 @@
   <ItemGroup>
     <ClInclude Include="command.h" />
     <ClInclude Include="Expression.h" />
+    <ClInclude Include="ExpressionSet.h" />
     <ClInclude Include="IOControl.h" />
     <ClInclude Include="ListsData.h" />
     <ClInclude Include="PolishReverse.h" />

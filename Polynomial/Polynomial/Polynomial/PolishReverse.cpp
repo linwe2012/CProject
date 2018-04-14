@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "PolishReverse.h"
+#include "command.h"
 /*part of the codes concerning stacks is from https://blog.csdn.net/huangchijun11/article/details/60963444 */
 #define STACK_INI_SIZE 20
 #define STACK_INCRETMENT 10
@@ -32,7 +33,9 @@ void initOperatorStack(OperatorStack *s)
 {
 	s->base = (OperatorType *)malloc(STACK_INI_SIZE * sizeof(OperatorType));
 	if (s == NULL) {
-		printf("Fails to initialize operator stack.\n");
+		throwError("initOperatorStack::Fails to initialize operator stack. The program will end.\n", RED);
+		getchar(); getchar(); getchar(); getchar();
+		exit(0);
 	}
 
 	s->top = s->base;
@@ -46,7 +49,9 @@ void pushOperatorStack(OperatorStack *s, OperatorType op)
 	{
 		s->base = (OperatorType *)realloc(s->base, (stackSize + STACK_INCRETMENT) * sizeof(OperatorType));
 		if (s == NULL) {
-			printf("Fails to realloc operator stack.\n");
+			throwError("pushOperatorStack::Fails to realloc operator stack. The program will end.\n", RED);
+			getchar(); getchar(); getchar(); getchar();
+			exit(0);
 		}
 		s->top = s->base + stackSize;
 		s->stackSize = stackSize + STACK_INCRETMENT;
@@ -94,7 +99,9 @@ void initFragmentStack(FragmentStack *s)
 {
 	s->base = (FragmentType *)malloc(STACK_INI_SIZE * sizeof(FragmentType));
 	if (s == NULL) {
-		printf("Fails to initialize Fragment stack.\n");
+		throwError("initFragmentStack::Fails to initialize Fragment stack. The program will end.\n", RED);
+		getchar(); getchar(); getchar(); getchar();
+		exit(0);
 	}
 
 	s->top = s->base;
@@ -108,7 +115,9 @@ void pushFragmentStack(FragmentStack *s, FragmentType fragment)
 	{
 		s->base = (FragmentType *)realloc(s->base, (stackSize + STACK_INCRETMENT) * sizeof(FragmentType));
 		if (s == NULL) {
-			printf("Fails to realloc Fragment stack.\n");
+			throwError("pushFragmentStack::Fails to realloc Fragment stack. The program will end.\n", RED);
+			getchar(); getchar(); getchar(); getchar();
+			exit(0);
 		}
 		s->top = s->base + stackSize;
 		s->stackSize = stackSize + STACK_INCRETMENT;

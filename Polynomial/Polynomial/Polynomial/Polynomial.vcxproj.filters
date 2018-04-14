@@ -33,6 +33,9 @@
     <ClCompile Include="command.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ExpressionSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PolishReverse.h">
@@ -51,6 +54,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="command.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

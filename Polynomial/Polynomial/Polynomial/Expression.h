@@ -23,12 +23,14 @@ typedef struct exp_exp
 	struct poly_poly *son;
 } Expressions;
 
-int ExpressionSize = sizeof(Expressions);
-int PolySize = sizeof(Poly);
+extern int ExpressionSize;
+extern int PolySize;
 
-char varTable[MAXVAR];
+extern char varTable[MAXVAR];
 
 void freePolyList(Poly *head);
+void freeExpression(Expressions *head);
+int addNewVariable(char var, Expressions *exp);
 
 #endif // !_EXPRESSION_H_
 

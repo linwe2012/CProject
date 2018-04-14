@@ -3,9 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define MAX_NAME 100
+#include "ExpressionSet.h"
+
+
 #define MAX_ADDRESS 100
 #define MAX_BUFFER 1000
+#define DEFAULT_SAV_FILE_LOCATION "./res/sav.exp"
+#define DEFAULT_SAV_FILE_NAME "sav.exp"
+#define DEFALT_TEMP_FILE_LOCATION "./res/temp.exp"
+#define DEFALT_BUFFER_FILE_LOCATION "./res/temp.exp"
+
 /**
 * @brief: 
 * @param [in] exp1: 
@@ -13,7 +20,7 @@
 * @exception
 * @note
 */
-char* freadExpression(char *buffer, char *address);
+char* fgetExpression(char *buffer, char *address);
 /**
 * @brief: check if it is a legal expression
 * @param [in] s: a pointer to the string to be check;
@@ -26,5 +33,18 @@ int stringLegalchecker(char*s);
 void compactArray(char *s, char c);
 void expressionAutoCorrector(char *s);
 int parentheseCherker(char *s);
+int parentheseAutoAdder(char *s, int num, int maxBuffer);
+
+
+bool isFundamentalOperator(char c);
+ExpressionSets *freadExpression(int ID, const char *FileAddress);
+void throwError(const char*errorLog, int color);
+
+
+void printExpressionSet(ExpressionSets *exps);
+int printExpressionBuffer(ExpresionBuffer *expb);
+bool checkExpressionBufferID(ExpresionBuffer *expb, int ID);
+void printExpressionID(ExpresionBuffer *expb);
+
 #endif // !_IOCONTROL_H_
 
