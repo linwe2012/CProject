@@ -9,7 +9,7 @@
 * @note
 */
 
-void add(Expressions *exp1, Expressions *exp2);
+void add(Expressions* &exp1, Expressions* &exp2);
 
 /**
 * @brief: subtract expression2 from expresion1
@@ -18,7 +18,7 @@ void add(Expressions *exp1, Expressions *exp2);
 * @exception
 * @note
 */
-void sub(Expressions *exp1, Expressions *exp2);
+void sub(Expressions* &exp1, Expressions* &exp2);
 
 /**
 * @brief: add expression2 to expresion1
@@ -27,7 +27,8 @@ void sub(Expressions *exp1, Expressions *exp2);
 * @exception
 * @note
 */
-void power();
+Expressions * mul(Expressions *exp1, Expressions *exp2);
+void copyExp(Expressions* p1, Expressions* p2);
 
 #endif // !_POLYCALCULATOR_H_
 

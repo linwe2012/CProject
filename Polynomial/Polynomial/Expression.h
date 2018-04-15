@@ -1,6 +1,7 @@
 #ifndef _EXPRESSION_H_
 #define _EXPRESSION_H_
 #define MAXVAR 26
+#include <stdio.h>
 
 /*可以更改typedef 为double来支持小数*/
 typedef int PolyType;
@@ -27,10 +28,16 @@ extern int ExpressionSize;
 extern int PolySize;
 
 extern char varTable[MAXVAR];
+extern bool varValueConfig[MAXVAR];
+extern PolyType varValue[MAXVAR];
+void initVar();
 
-void freePolyList(Poly *head);
-void freeExpression(Expressions *head);
+void freePolyList(Poly *&head);
+void freeExpression(Expressions *&head);
 int addNewVariable(char var, Expressions *exp);
+Expressions *newExpression(const char *s);
+Poly *polyDuplicate(Poly *Source);
+Expressions *expressionDuplicate(Expressions *Source);
 
 #endif // !_EXPRESSION_H_
 

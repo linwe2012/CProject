@@ -242,7 +242,7 @@ void RPN(char *s, OperatorStack *op, FragmentStack *frag)
 				break;
 			}
 			case '*': case'+': case'-': case'^': {
-				if (*s == '-' && (s == head || isOperator(*(s - 1)))) {
+				if (*s == '-' && (s == head || *(s - 1) == '^' || *(s - 1) == '*' )) {
 					normalOpreaterDealer(negationIdentifier, op, frag);
 				}
 				else {
@@ -326,7 +326,6 @@ void printRPN(FragmentStack *frag, char *head) {
 		}
 		else {
 			while (!isOperator(*s)) {
-
 				s++;
 				if (isStringEnd(*s) || isOperator(*s)) {
 					break;

@@ -3,13 +3,17 @@
 #include <string.h>
 #include <stdio.h>
 #include <Windows.h>
+#include <math.h>
 #define CMD_RESPONSE_COLOR BLUE
 #define CMD_TEMP_MAX_BUFFER 6
 #define CMD_HELP_KINDS 12
+#define M_PI 3.14159265358979323846
+
 int cmd_color = CMD_TRUE;
 int cmd_autoCorrect= CMD_TRUE;
 int cmd_maxErrorLog = 4;
 int cmd_autoParenthese = CMD_TRUE;
+int cmd_autoSave = CMD_TRUE;
 
 void printfSettings();
 
@@ -210,4 +214,76 @@ void throwError(const char*errorLog, int color) {
 	printf(errorLog);
 	if (cmd_color == CMD_TRUE)
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+}
+
+/*
+float myLikeSigmod(float x) {
+	float a = x;
+	if (a < 0) {
+		a = -a;
+	}
+	return (x / (1 + a)) / 2;
+}
+
+float myNormalDistribution(float x) {
+	float sigma = sqrt(5);
+	//float mu = 0;
+	//return  (1.0 / (sigma * sqrt(2 * M_PI)) ) * exp(-(x - mu)*(x - mu) / (2.0 * sigma * sigma));
+	return  (1.0 / (sigma * sqrt(2 * M_PI))) * exp(-x*x / (2.0 * sigma * sigma));
+}
+*/
+
+void cmdDraw(PolyVarType x, PolyVarType y, PolyType step, PolyType range, PolyType offset_x, PolyType offset_y, ExpressionSets *exps)
+{
+	int i = 2 * int(range / step);
+	int count = i;
+	int j = i;
+	PolyType pos_x, pos_y;
+	double total_1, total_2;
+	float a[6];
+	FILE *fp;
+	clearVarValue();
+	pos_x = offset_x + range;
+	pos_y = offset_y + range;
+
+	fopen_s(&fp, "./res/draw.data", "wb");
+	
+	if (fp == NULL) {
+		if (cmd_color == CMD_TRUE)
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREY);
+		printf("cmdDraw::Fails to open file\n");
+		if (cmd_color == CMD_TRUE)
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+	}
+	// i
+	//pos color
+	//average height
+	fwrite(&count, sizeof(int), 1, fp);
+	a[3] = a[4] = a[5] = 0;
+	total_2 = 0;
+	for (; i > 0; i--) {
+		a[0] = float(pos_x);
+		total_1 = 0;
+		pos_y = offset_y + range;
+		for (; j > 0; j--) {
+			a[1] = float(pos_y);
+			varValue[x] = pos_x;
+			varValue[y] = pos_y;
+			a[2] = float(caluclateExpressionResult(exps));
+			fwrite(a, sizeof(float), 6, fp);
+			pos_y -= step;
+			total_1 += a[2];
+		}
+		pos_x -= step;
+		total_2 += total_1 / count;
+		//a[3] = myLikeSigmod(a[2]) + 1;  //red
+		//a[4] = myNormalDistribution(a[2]) * 2;
+		//a[5] = -myLikeSigmod(a[2]) + 1
+	}
+	total_2 /= count;
+	a[0] = float(total_2);
+	fwrite(a, sizeof(float), 1, fp);
+	if (fclose(fp)) {
+		throwError("cmdDraw::Can't close file", GREY);
+	}
 }

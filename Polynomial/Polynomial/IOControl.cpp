@@ -6,7 +6,7 @@
 static FILE *globe_fp;
 bool isFundamentalOperator(char c);
 
-char* fgetExpression(char *buffer, char *address) 
+char* fgetExpression(char *buffer, const char *address) 
 {
 	static char exAddress[MAX_ADDRESS];
 	static long offset;
@@ -83,7 +83,7 @@ ExpressionSets *freadExpression(int ID, const char *FileAddress) {
 	return exps;
 }
 
-ExpressionSets *freadExpression_name(const char *exp_name, char *FileAddress) {
+ExpressionSets *freadExpression_name(const char *exp_name, const char *FileAddress) {
 	FILE *fp;
 	ExpressionSets *exps = NULL;
 	fopen_s(&fp, FileAddress, "rb");
@@ -108,9 +108,9 @@ ExpressionSets *freadExpression_name(const char *exp_name, char *FileAddress) {
 	return exps;
 }
 
-void fwriteExpression(ExpressionSets *exps, char *FileAddress) {
+void fwriteExpression_name(ExpressionSets *exps, const char *FileAddress) {
 	FILE *fp;
-	ExpressionSets *exps1 = NULL;
+	ExpressionSets *exps1 = (ExpressionSets *)malloc(expressionSetsSize);
 	fopen_s(&fp, FileAddress, "rb+");
 	if (fp == NULL) {
 		fopen_s(&fp, FileAddress, "wb");
@@ -124,11 +124,11 @@ void fwriteExpression(ExpressionSets *exps, char *FileAddress) {
 			puts(FileAddress);
 		}
 	}
-	fread(exps, expressionSetsSize, 1, fp);
+	fread(exps1, expressionSetsSize, 1, fp);
 	while (!feof(fp) && strcmp(exps1->name, exps->name) != 0) {
-		fread(exps, expressionSetsSize, 1, fp);
+		fread(exps1, expressionSetsSize, 1, fp);
 	}
-	if (!feof(fp)) {
+	if (strcmp(exps1->name, exps->name) == 0) {
 		throwError("fwriteExpression::Expression whose name duplicated\n", GREY);
 		printf("Input 0 to overwrite it. Input others to abort saving.\n");
 		if (getchar() != '0') {
@@ -137,6 +137,7 @@ void fwriteExpression(ExpressionSets *exps, char *FileAddress) {
 				throwError("fwriteExpression::Can't close file at ", GREY);
 				puts(FileAddress);
 			}
+			freeExpressionSets(exps1);
 			return;
 		}
 		else {
@@ -145,6 +146,7 @@ void fwriteExpression(ExpressionSets *exps, char *FileAddress) {
 				throwError("fwriteExpression::Can't close file at ", GREY);
 				puts(FileAddress);
 			}
+			freeExpressionSets(exps1);
 			return;
 		}
 		fflush(stdin);
@@ -155,7 +157,47 @@ void fwriteExpression(ExpressionSets *exps, char *FileAddress) {
 		throwError("fwriteExpression::Can't close file at ", GREY);
 		puts(FileAddress);
 	}
+	freeExpressionSets(exps1);
 	return;
+}
+
+int fwriteExpression_ID(ExpressionSets *exps,const char *FileAddress) {
+	FILE *fp;
+	ExpressionSets *exps1 = (ExpressionSets *)malloc(expressionSetsSize);
+	fopen_s(&fp, FileAddress, "rb+");
+	if (fp == NULL) {
+		fopen_s(&fp, FileAddress, "wb");
+		if (fclose(fp)) {
+			throwError("fwriteExpression::Can't close file at ", GREY);
+			puts(FileAddress);
+		}
+		fopen_s(&fp, FileAddress, "rb+");
+		if (fp == NULL) {
+			throwError("fwriteExpression::Fails to open file at ", GREY);
+			puts(FileAddress);
+		}
+	}
+	fread(exps1, expressionSetsSize, 1, fp);
+	while (!feof(fp) && exps1->ID != exps->ID) {
+		fread(exps, expressionSetsSize, 1, fp);
+	}
+	if (exps1->ID != exps->ID) {
+		fwrite(exps, expressionSetsSize, 1, fp);
+		if (fclose(fp)) {
+			throwError("fwriteExpression::Can't close file at ", GREY);
+			puts(FileAddress);
+		}
+		freeExpressionSets(exps1);
+		return -1;
+	}
+	fseek(fp, 0, SEEK_END);
+	fwrite(exps, expressionSetsSize, 1, fp);
+	if (fclose(fp)) {
+		throwError("fwriteExpression::Can't close file at ", GREY);
+		puts(FileAddress);
+	}
+	freeExpressionSets(exps1);
+	return 0;
 }
 
 
@@ -166,15 +208,16 @@ int stringLegalchecker(char*s)
 	char c;
 	int i;
 	char *head;
+	HANDLE hwdl = GetStdHandle(STD_OUTPUT_HANDLE);
 	head = s;
 
 	c = *s;
 	if (isOperator(c)) {
 		if (cmd_color == CMD_TRUE)
-			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREY);
+			SetConsoleTextAttribute(hwdl, GREY);
 		printf("stringLegalchecker::The first character: ");
 		if (cmd_color == CMD_TRUE)
-			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), RED);
+			SetConsoleTextAttribute(hwdl, RED);
 		printf("%c ", c);
 		throwError("is not a number\n", GREY);
 		errors++;
@@ -213,13 +256,13 @@ int stringLegalchecker(char*s)
 		}
 		else {
 			if (cmd_color == CMD_TRUE)
-				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREY);
+				SetConsoleTextAttribute(hwdl, GREY);
 			printf("stringLegalchecker::unknow character ");
 			if (cmd_color == CMD_TRUE)
-				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), RED);
+				SetConsoleTextAttribute(hwdl, RED);
 			printf("%c\n", c);
 			if (cmd_color == CMD_TRUE)
-				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+				SetConsoleTextAttribute(hwdl, WHITE);
 			errors++;
 			legal = -1;
 			if (errors > cmd_maxErrorLog) {
@@ -229,13 +272,13 @@ int stringLegalchecker(char*s)
 		if (isFundamentalOperator(*s) && isFundamentalOperator(*(s + 1)) &&
 			!isStringEnd(*(s + 1)) && !isStringEnd(*(s + 2)) && !(*(s+1) == '-') && isNumber(*(s + 2))) {
 			if (cmd_color == CMD_TRUE)
-				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREY);
+				SetConsoleTextAttribute(hwdl, GREY);
 			printf("stringLegalchecker::Dupilicated binary operaters: ");
 			if (cmd_color == CMD_TRUE)
-				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), RED);
+				SetConsoleTextAttribute(hwdl, RED);
 			printf("%c%c\n", *s, *(s+1));
 			if (cmd_color == CMD_TRUE)
-				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+				SetConsoleTextAttribute(hwdl, WHITE);
 			errors++;
 			legal = -1;
 			if (errors > cmd_maxErrorLog) {
@@ -294,15 +337,16 @@ void expressionAutoCorrector(char *s) {
 	char c;
 	int flag = 0;
 	for (i = 0, j = 0; c = s[i]; i++) {
-		if (s[i] == '(' && s[i + 1] == ')') {
-			i = i + 1;
-			continue;
+		if (s[i] == '(' ) {
+			if (s[i + 1] == ')') {
+				i = i + 1;
+				continue;
+			}
 		}
 		if (isNumber(c) || isOperator(c) || isVariable(c))
 		{
 			s[j++] = s[i];
 		}
-		
 	}
 	s[j] = '\0';
 	if (j < i-1) {
@@ -351,7 +395,13 @@ int parentheseAutoAdder(char *s, int num, int maxBuffer)
 		end++;
 	}
 	count = end - s + 1;
-	if (isOp = isOperator(*s) || num < 0) {
+	if (*s == '+' || *s == '*' || *s == '^') {
+		isOp = true;
+	}
+	else
+		isOp = false;
+
+	if (isOp || num < 0) {
 		if (isOp) {
 			count++;
 			offset++;

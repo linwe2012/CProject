@@ -1,11 +1,14 @@
 #include "Expression.h"
 #include "PolishReverse.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 int newVar(char v, bool *isNewVar);
-PolyType getNextNum(char *s, int *leap);
+PolyType getNextNum(const char *s, int *leap);
+
 char varTable[MAXVAR];
+bool varValueConfig[MAXVAR];
+PolyType varValue[MAXVAR];
+
 int ExpressionSize = sizeof(Expressions);
 int PolySize = sizeof(Poly);
 
@@ -52,17 +55,18 @@ Expressions *newExpression(char *s, char *head){
 }
 */
 
-Expressions *newExpression(char *s, char *head) {
-	Expressions *newexp = NULL;
+Expressions *newExpression(const char *s) {
+	Expressions *newexp;
 	int leap;
 	newexp = (Expressions *)malloc(ExpressionSize);
+	newexp->next = NULL;
+	newexp->son = NULL;
 	if (isNumber(*s)) {
 		newexp->coeff = getNextNum(s, &leap);
-		newexp->next = NULL;
-		newexp->son = NULL;
 	}
 	else {
 		while (isVariable(*s)) {
+			newexp->coeff = 1;
 			addNewVariable(*s, newexp);
 			s++;
 		}
@@ -87,24 +91,26 @@ int newVar(char v, bool *isNewVar)
 	return i;
 }
 
-PolyType getNextNum(char *s, int *leap) {
+PolyType getNextNum(const char *s, int *leap) {
 	PolyType num = 0;
 	PolyType denominator = 1;
 	PolyType isBeforeDot = 10;
 	*leap = 0;
 
-	while (isNumber(*s) == true) {
+	while (*s >= '0' && *s <= '9') {
 		num = num * isBeforeDot + (*s - '0') / denominator;
 		if (*s == '.' || denominator > 1) {
 			denominator = denominator * 10;
 			isBeforeDot = 1;
 		}
+		*leap++;
+		s++;
 	}
 	return num;
 }
 
-void freePolyList(Poly *head) {
-	Poly *ptr;
+void freePolyList(Poly *&head) {
+	Poly *ptr = head;
 	while (head) {
 		ptr = head;
 		head = head->son;
@@ -112,17 +118,17 @@ void freePolyList(Poly *head) {
 	}
 }
 
-void freeExpression(Expressions *head) {
-	Expressions *exp;
+void freeExpression(Expressions *&head) {
+	Expressions *exp = head;
 	while (head) {
-		freePolyList(head->son);
+		freePolyList(((head)->son));
 		exp = head;
-		head = head->next;
+		head = (head)->next;
 		free(exp);
 	}
 }
 
-int addNewVariable(char var, Expressions *exp) {
+int addNewVariable(const char var, Expressions *exp) {
 	bool isNewVar;
 	int varPriority = newVar(var, &isNewVar);
 	int flag = 0;
@@ -135,13 +141,22 @@ int addNewVariable(char var, Expressions *exp) {
 	newVarNode->var = varPriority;
 
 	if (isNewVar == true) {
-		while (head->son != NULL) {
-			head = head->son;
+		if (head == NULL) {
+			exp->son = newVarNode;
 		}
+		else {
+			while (head->son != NULL) {
+				head = head->son;
+			}
+			head->son = newVarNode;
+		}
+		
 	}
 	else {
-		newVarNode = head;
-		if (head->var > varPriority) {
+		if (head == NULL) {
+			exp->son = newVarNode;
+		}
+		else if (head->var > varPriority) {
 			newVarNode->son = head;
 			exp->son = newVarNode;
 		}
@@ -172,4 +187,57 @@ int addNewVariable(char var, Expressions *exp) {
 		
 	}
 	return 0;
+}
+
+//debug before use it
+Poly *polyDuplicate(Poly *Source) {
+	Poly *ptr, *Destination;
+	if (Source == NULL) {
+		return NULL;
+	}
+	Destination = (Poly *)malloc(PolySize);
+	ptr = Destination;
+	(Destination)->degree = Source->degree;
+	(Destination)->var = Source->var;
+	(Destination)->son = NULL;
+	Source = Source->son;
+	while (Source != NULL) {
+		ptr->son = (Poly *)malloc(PolySize);
+		ptr = ptr->son;
+		ptr->var = Source->var;
+		ptr->degree = Source->degree;
+		Source = Source->son;
+	}
+	ptr->son = NULL;
+	return (Destination);
+}
+
+//debug before use it
+Expressions *expressionDuplicate(Expressions *Source) {
+	Expressions *exp, *Destination;
+	if (Source == NULL) {
+		return NULL;
+	}
+	Destination = (Expressions *)malloc(ExpressionSize);
+
+	(Destination)->coeff = Source->coeff;
+	exp = (Destination);
+	(Destination)->son = polyDuplicate(Source->son);
+	Source = Source->next;
+	while (Source) {
+		exp->next = (Expressions *)malloc(ExpressionSize);
+		exp->coeff = Source->coeff;
+		exp->son = polyDuplicate(Source->son);
+		Source = Source->next;
+	}
+	exp->next = NULL;
+	return Destination;
+}
+
+void initVar() {
+	for (int i = 0; i < MAXVAR; i++) {
+		varValue[i] = 0;
+		varValueConfig[i] = false;
+		varTable[i] = -1;
+	}
 }

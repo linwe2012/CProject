@@ -122,6 +122,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PolishReverse.cpp" />
     <ClCompile Include="ListsData.cpp" />
+    <ClCompile Include="PolyCalculator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="command.h" />

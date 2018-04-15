@@ -39,12 +39,29 @@ int parentheseAutoAdder(char *s, int num, int maxBuffer);
 bool isFundamentalOperator(char c);
 ExpressionSets *freadExpression(int ID, const char *FileAddress);
 void throwError(const char*errorLog, int color);
+/**
+* @brief: write in Expression According to name, usually saved by user
+* @param [in] exps: a pointer to expression set to be written;
+* @param [in] FileAddress: the loaction of the file;
+* @exception
+* @return 
+* @note: if duplicated name is detected, it will warn user to overwrite it or not;
+*/
+void fwriteExpression_name(ExpressionSets *exps, const char *FileAddress);
+/**
+* @brief: write in Expression According to ID, usually used to save buffer
+* @param [in] exps: a pointer to expression set to be written;
+* @param [in] FileAddress: the loaction of the file;
+* @exception
+* @return 0:fine  -1:duplicted ID
+* @note: if duplicated ID is detected, it will automatically overwrite, with a return Value -1;
+*/
+int fwriteExpression_ID(ExpressionSets *exps, const char *FileAddress);
 
 
-void printExpressionSet(ExpressionSets *exps);
-int printExpressionBuffer(ExpresionBuffer *expb);
-bool checkExpressionBufferID(ExpresionBuffer *expb, int ID);
-void printExpressionID(ExpresionBuffer *expb);
+
+
+
 
 #endif // !_IOCONTROL_H_
 
