@@ -31,6 +31,10 @@ extern char varTable[MAXVAR];
 extern bool varValueConfig[MAXVAR];
 extern PolyType varValue[MAXVAR];
 void initVar();
+int isVarInTable(char c);
+
+//it sorts the expression
+void expressionSorter(Expressions *&exp);
 
 void freePolyList(Poly *&head);
 void freeExpression(Expressions *&head);

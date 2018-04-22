@@ -17,6 +17,7 @@ typedef struct {
 	int maxSize;
 	int ID;
 	char name[MAX_NAME];
+	char varTable[MAXVAR];
 }ExpressionSets;
 
 typedef ExpressionSets* ExpresionBufferElem;
@@ -38,9 +39,24 @@ ExpressionSets *initExpressiosSets(bool hasID, ExpressionSets *exps, int initSiz
 void pushExpressiosSets(ExpressionSets *exps, ExpressionSetsElem exp);
 ExpressionSetsElem popExpressiosSets(ExpressionSets *exps, ExpressionSetsElem *exp = NULL);
 void freeExpressionSets(ExpressionSets *&exps);
+ExpressionSets *expressionSetsDuplicate(ExpressionSets *Source);
 
-
+/**
+* @brief: calculate all the expressions into a number
+* @param [in] exps: the expression sets to be calculated
+* @exception
+* @note: all the variable's value will be read from globle varValue[];
+* it will not check if the value has any value
+*/
 PolyType caluclateExpressionResult(ExpressionSets *exps);
+
+/**
+* @brief: calculate the expression sets and merge 
+* @param [in] exps: the expression sets to be calculated
+* @exception
+* @note: all the variable's value will be read from globle varValue[];
+* it will check if the value has any value from varValueConfig[];
+*/
 void caluclateExpression(ExpressionSets *exps);
 
 void clearVarValue();
@@ -55,16 +71,32 @@ void initExpressionBuffer(ExpresionBuffer *expb);
 * @note: if the stack is full, then it will clear off;
 */
 void pushExpressionBuffer(ExpresionBuffer *expb, ExpresionBufferElem exps, bool ifSave);
+
 /**
 * @brief: print the Expression Set
 * @exception
 * @return
 * @note: only print the base of it
 */
+ExpressionSets *getCurrentBufferExpressionSets(ExpresionBuffer *expb);
+
+
 void printExpressionSet(ExpressionSets *exps);
+
+/**
+* @brief: print the latest expression set added in to expression buffer
+* @param [in] expb: a pointer to expression buffer;
+* @exception
+* @return
+* @note:
+*/
 void printBufferCurrentOffset(ExpresionBuffer *expb);
 void printExpression(Expressions *exp);
 void printExpressionSet_all(ExpressionSets *exps);
+
+void expressionSetsVarCpy(ExpressionSets *exps);
+void expressionSetsVarSync(ExpressionSets *exps);
+
 void printExpressionSet_ID(ExpresionBuffer *expb);
 int printExpressionBuffer(ExpresionBuffer *expb);
 bool checkExpressionBufferID(ExpresionBuffer *expb, int ID);

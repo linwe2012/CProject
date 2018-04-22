@@ -1,5 +1,7 @@
 #include "command.h"
 #include "IOControl.h"
+#include "ExpressionSet.h"
+#include "PolishReverse.h"
 #include <string.h>
 #include <stdio.h>
 #include <Windows.h>
@@ -14,6 +16,9 @@ int cmd_autoCorrect= CMD_TRUE;
 int cmd_maxErrorLog = 4;
 int cmd_autoParenthese = CMD_TRUE;
 int cmd_autoSave = CMD_TRUE;
+int cmd_TimeLimit = CMD_DEFAULT_TIME_LIMIT;
+double cmd_ErrorTimeGap = 1;
+int cmd_errorOccurance = 2;
 
 void printfSettings();
 
@@ -52,7 +57,7 @@ void printHelp();
 int cmdFragmentCopy(char *Destination, char *origin, int maxLength);
 
 
-int cmdDealer(char *s, ExpresionBuffer *expb) {
+int cmdDealer(char *s, ExpresionBuffer *expb, FragmentStack *frag, char *bufferHead) {
 	char pre_cmd[CMD_TEMP_MAX_BUFFER];
 	char cmd_speci[CMD_TEMP_MAX_BUFFER];
 	char name[MAX_NAME]= "";
@@ -126,6 +131,7 @@ int cmdDealer(char *s, ExpresionBuffer *expb) {
 	else if (strcmp(pre_cmd, "u") == 0 || strcmp(pre_cmd, "d") == 0) {
 		ptr = s + offset;
 		res = 1;
+		/*
 		if (*ptr != '\0' && *ptr != '\n') {
 			ptr++;
 			res = 0;
@@ -133,7 +139,8 @@ int cmdDealer(char *s, ExpresionBuffer *expb) {
 				res = res * 10 + *ptr - '0';
 				ptr++;
 			}
-		}
+		}*/
+		res = cmdGetNum<int>(ptr);
 		if (res == 0) {
 			res = 1;
 		}
@@ -161,6 +168,9 @@ int cmdDealer(char *s, ExpresionBuffer *expb) {
 			if (strcmp(cmd_speci, "set") == 0) {
 				printfSettings();
 			}
+			if (strcmp(cmd_speci, "rpn") == 0) {
+				printRPN(frag, bufferHead);
+			}
 		}
 	}
 	return res;
@@ -171,6 +181,7 @@ int initCommand() {
 	cmd_autoCorrect = CMD_TRUE;
 	cmd_autoParenthese = CMD_TRUE;
 	cmd_maxErrorLog = 4;
+	cmd_TimeLimit = CMD_DEFAULT_TIME_LIMIT;
 	return 0;
 }
 
@@ -217,6 +228,83 @@ void throwError(const char*errorLog, int color) {
 }
 
 /*
+template <typename T>
+T cmdGetNum(char *&s)
+{
+	T res = 0;
+	int flag = 1;
+	
+	T denomnator = 10;
+	if (*s != '\0' && *s != '\n') {
+		s++;
+		if (*s == '-') {
+			flag = -flag;
+		}
+		res = 0;
+		while (*s >= '0' && *s <= '9') {
+			res = res * 10 + *ptr - '0';
+			s++;
+		}
+		if (*s == '.')
+		{
+			s++;
+			while (*s >= '0' && *s <= '9') {
+				res = res + (*s - '0') / denominator;
+				s++;
+				denomnator *= 10;
+			}
+		}
+	}
+	return T(flag * res);
+}
+*/
+
+int varValueControl (ExpressionSets *exps, ExpresionBuffer *expb, char *s)
+{
+	ExpressionSets *myExps;
+	int var, i;
+	expressionSetsVarSync(exps);
+	while (*s != '\n') {
+		if ((var = isVarInTable(*s)) != -1) {
+			//s only move to the next character of '='
+			//which is required by cmdGetNum
+			s++;
+			if (*s != '=') {
+				throwError("varValueControl::Unkown character: ", GREY);
+				printf("%c\n", *s);
+				return -1;
+			}
+			varValueConfig[var] = true;
+			varValue[var] = cmdGetNum<PolyType>(s);
+			//myExps->varTable[var] = -1;
+			if (*s == '\n' || *s == '\0') {
+				break;
+			}
+			//s should be pointing at ','
+			s++;
+			//here s has already moved to next var
+		}
+		else {
+			throwError("varValueControl::Undefined variable\n", GREY);
+			return -1;
+		}
+	}
+	/*
+	i = var = 0;
+	for (i = 0; i < MAXVAR; i++) {
+		if (myExps->varTable[i] != -1) {
+			myExps->varTable[var++] = myExps->varTable[i];
+		}
+	}*/
+	myExps = expressionSetsDuplicate(exps);
+	//printExpression(*(myExps->base));
+	caluclateExpression(myExps);
+	pushExpressionBuffer(expb, myExps, true);
+	printBufferCurrentOffset(expb);
+	return 0;
+}
+
+/*
 float myLikeSigmod(float x) {
 	float a = x;
 	if (a < 0) {
@@ -254,6 +342,7 @@ void cmdDraw(PolyVarType x, PolyVarType y, PolyType step, PolyType range, PolyTy
 		printf("cmdDraw::Fails to open file\n");
 		if (cmd_color == CMD_TRUE)
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE);
+		return;
 	}
 	// i
 	//pos color

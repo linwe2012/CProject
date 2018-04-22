@@ -36,7 +36,7 @@ int parentheseCherker(char *s);
 int parentheseAutoAdder(char *s, int num, int maxBuffer);
 
 
-bool isFundamentalOperator(char c);
+inline bool isFundamentalOperator(char c);
 ExpressionSets *freadExpression(int ID, const char *FileAddress);
 void throwError(const char*errorLog, int color);
 /**

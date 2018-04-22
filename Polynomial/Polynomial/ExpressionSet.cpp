@@ -1,6 +1,7 @@
 #include "ExpressionSet.h"
 #include "command.h"
 #include "IOControl.h"
+#include "PolyCalculator.h"
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +52,12 @@ void pushExpressionBuffer(ExpresionBuffer *expb, ExpresionBufferElem exps, bool 
 	expb->offset = expb->top - expb->base;
 }
 
-
+ExpressionSets *getCurrentBufferExpressionSets(ExpresionBuffer *expb)
+{
+	if (expb->base == expb->top)
+		return NULL;
+	return *(expb->base + expb->offset - 1);
+}
 
 ExpressionSets *initExpressiosSets(bool hasID, ExpressionSets *exps,  int initSize)
 {
@@ -131,30 +137,50 @@ void caluclateExpression(ExpressionSets *exps)
 {
 	Expressions *exp, *ptr;
 	ExpressionSetsElem *moveable_base = exps->base;
-	Poly *poly;
+	Poly *poly, *poly1;
 	while (moveable_base < exps->top)
 	{
 		ptr = exp = *moveable_base;
 		while (exp != NULL) {
-			poly = exp->son;
+			poly1 = exp->son;
+			if (exp->coeff == 0) {
+				//it only has a head
+				if (ptr->next == NULL && ptr == *moveable_base) {
+					freePolyList(ptr->son);
+					break;
+				}
+				else {
+					ptr->next = exp->next;
+					freePolyList((exp->son));
+					free(exp);
+					exp = ptr->next;
+				}
+				continue;
+			}
+
+			while (poly1 && varValueConfig[poly1->var]) {
+				exp->coeff *= PolyType(pow(varValue[poly1->var], poly1->degree));
+				poly1 = poly1->son;
+				free(exp->son);
+				exp->son = poly1;
+			}
+			if (poly1 == NULL) {
+				poly = NULL;
+			}
+			else {
+				poly = poly1->son;
+			}
 			while (poly) {
 				if (varValueConfig[poly->var]) {
 					exp->coeff *= PolyType (pow(varValue[poly->var], poly->degree));
-					if (exp->coeff == 0) {
-						//it only has a head
-						if (ptr->next == NULL) {
-							freeExpression(ptr);
-						}
-						else {
-							ptr->next = exp->next;
-							freePolyList((exp->son));
-							free(exp);
-							exp = ptr->next;
-
-						}
-						break;
-					}
+					poly1->son = poly->son;
+					free(poly);
+					poly = poly1->son;
 				}
+				if (poly == NULL) {
+					break;
+				}
+				poly1 = poly;
 				poly = poly->son;
 			}
 			if (exp == NULL) {
@@ -162,10 +188,35 @@ void caluclateExpression(ExpressionSets *exps)
 			}
 			ptr = exp;
 			exp = exp->next;
+			//printExpression(*moveable_base);
 		}
+		/*
+		//merge the same expressions
+		ptr = exp = *moveable_base;
+		ptr = ptr->next;
+		while (ptr)
+		{
+			if (ptr && compare(ptr, exp) == 0) {
+				while (ptr && compare(ptr, exp) == 0)
+				{
+					exp->coeff += ptr->coeff;
+					exp->next = ptr->next;
+					freePolyList(ptr->son);
+					free(ptr);
+					ptr = exp->next;
+				}
+			}
+			else
+			{
+				exp = ptr;
+				ptr = ptr->next;
+			}
+		}*/
+		expressionSorter(*moveable_base);
 		moveable_base++;
 	}
 }
+
 
 
 PolyType caluclateExpressionResult(ExpressionSets *exps) {
@@ -174,8 +225,8 @@ PolyType caluclateExpressionResult(ExpressionSets *exps) {
 	Poly *poly;
 	PolyType res = 0, temp;
 
-	while (moveable_base < exps->top)
-	{
+	//while (moveable_base < exps->top)
+	//{
 		exp = *moveable_base;
 		while (exp != NULL) {
 			poly = exp->son;
@@ -189,9 +240,9 @@ PolyType caluclateExpressionResult(ExpressionSets *exps) {
 			res += temp;
 			exp = exp->next;
 		}
-		moveable_base++;
+		//moveable_base++;
 
-	}
+	//}
 	return res;
 }
 
@@ -211,9 +262,11 @@ void printBufferCurrentOffset(ExpresionBuffer *expb)
 
 void printExpressionSet(ExpressionSets *exps)
 {
-	HANDLE hwdl = GetStdHandle(STD_OUTPUT_HANDLE);
-	Expressions *exp = *exps->base;
-	Poly *ptr;
+	//HANDLE hwdl = GetStdHandle(STD_OUTPUT_HANDLE);
+	Expressions *exp = *(exps->base);
+	//Poly *ptr;
+	printExpression(exp);
+	/*
 	while (exp != NULL) {
 		if (cmd_color == CMD_TRUE)
 			SetConsoleTextAttribute(hwdl, NUMBER_COLOR);
@@ -248,17 +301,26 @@ void printExpressionSet(ExpressionSets *exps)
 	printf("\n");
 	if (cmd_color == CMD_TRUE)
 		SetConsoleTextAttribute(hwdl, WHITE);
+		*/
 }
 
 void printExpression(Expressions *exp)
 {
 	HANDLE hwdl = GetStdHandle(STD_OUTPUT_HANDLE);
 	Poly *ptr;
+	if (exp == NULL) {
+		throwError("N/A", YELLOW);
+	}
 	while (exp != NULL) {
+		if (exp->coeff == -1)
+			printf("-");
 		if (cmd_color == CMD_TRUE)
 			SetConsoleTextAttribute(hwdl, NUMBER_COLOR);
-		if (exp->coeff != 1 || exp->son == NULL)
+		
+		if ((exp->coeff != 1 && exp->coeff != -1) || exp->son == NULL) {
 			printf("%d", exp->coeff);
+		}
+			
 		ptr = exp->son;
 
 		while (ptr) {
@@ -301,3 +363,58 @@ void printExpressionSet_all(ExpressionSets *exps)
 		i++;
 	}
 }
+
+int varTableCheck(ExpressionSets *exps, char var)
+{
+	int i = 0;
+	while (exps->varTable[i] != -1) {
+		if (exps->varTable[i] == var) {
+			return i;
+		}
+		i++;
+	}
+	return -1;
+}
+
+void expressionSetsVarCpy(ExpressionSets *exps) {
+	int i = 0;
+	while (varTable[i] != -1) {
+		exps->varTable[i] = varTable[i];
+		i++;
+	}
+	while (i < MAXVAR) {
+		varTable[i] = -1;
+		i++;
+	}
+}
+
+void expressionSetsVarSync(ExpressionSets *exps) {
+	int i = 0;
+	while (i < MAXVAR) {
+		varTable[i] = exps->varTable[i];
+		varValueConfig[i] = false;
+		varValue[i] = 1;
+		i++;
+	}
+}
+
+ExpressionSets *expressionSetsDuplicate(ExpressionSets *Source) {
+	ExpressionSets *Destination;
+	ExpressionSetsElem exps;
+	int i = 0;
+	ExpressionSetsElem *moveable_base = Source->base;
+	if (Source == NULL) {
+		return NULL;
+	}
+	Destination = initExpressiosSets(true, NULL);
+	for (i = 0; i < MAXVAR; i++) {
+		Destination->varTable[i] = Source->varTable[i];
+	}
+	while (moveable_base < Source->top) {
+		exps = expressionDuplicate(*moveable_base);
+		pushExpressiosSets(Destination, exps);
+		moveable_base++;
+	}
+	return Destination;
+}
+

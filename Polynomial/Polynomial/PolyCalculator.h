@@ -28,7 +28,17 @@ void sub(Expressions* &exp1, Expressions* &exp2);
 * @note
 */
 Expressions * mul(Expressions *exp1, Expressions *exp2);
-void copyExp(Expressions* p1, Expressions* p2);
-
+/**
+* @brief: compare p1's priority against p2
+* @param [in] p1: a pointer to a lists of expression
+* @param [in] p2: a pointer to a lists of expression
+* @return 0: the expressions are the same(should be merged)
+* @return 1: p1 has a higher priority
+* @return -1: p2 has a higher priority
+* @exception
+* @note: it doesn't rely on a list of priority, it compares var cuz var itself is a sign of priority 
+*/
+int compare(Expressions* p1, Expressions* p2);
+void expressionZeroEliminator(Expressions *&expHead);
 #endif // !_POLYCALCULATOR_H_
 

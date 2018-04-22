@@ -22,14 +22,20 @@ const char autoMultiplyOperator[2] = "*";
 //if a minus operater is a unary
 const char negationIdentifier[2] = "~";
 
-bool isNumber(char c);
-bool isOperator(char c);
+inline bool isNumber(char c);
+inline bool isOperator(char c);
 bool isVariable(char c);
 bool isStringEnd(char c);
 
 void RPN(char *s, OperatorStack *op, FragmentStack *frag);
 void initOperatorStack(OperatorStack *s);
+void clearOperatorStack(OperatorStack *s);
+void deleteOperatorStack(OperatorStack *s);
+
 void initFragmentStack(FragmentStack *s);
+void clearFragmentStack(FragmentStack *s);
+void deleteFragmenStack(FragmentStack *s);
+
 void printRPN(FragmentStack *frag, char *head);
 
 #endif // !_POLISHREVERSE_H_

@@ -1,4 +1,2 @@
-﻿  main.cpp
-c:\users\hp\source\repos\polynomial\polynomial\main.cpp(158): warning C4244: '=': conversion from 'double' to 'PolyType', possible loss of data
-c:\users\hp\source\repos\polynomial\polynomial\main.cpp(132): warning C4101: 'exp_multi': unreferenced local variable
+﻿  Expression.cpp
   Polynomial.vcxproj -> C:\Users\hp\source\repos\Polynomial\Debug\Polynomial.exe

@@ -1,5 +1,6 @@
 #include "PolyCalculator.h"
 #include <stdlib.h>
+#include <string.h>
 
 //-1:p1 behind p2
 //0: p1 = p2
@@ -119,6 +120,8 @@ void add(Expressions* &exp1, Expressions* &exp2)
 	if (exp2 != NULL) {
 		exp1_dup->next = exp2;
 	}
+	if(exp1 != NULL)
+		expressionZeroEliminator(exp1);
 }
 
 void sub(Expressions* &exp1, Expressions* &exp2)
@@ -181,6 +184,7 @@ int addVariableToExpression(PolyType degree, PolyVarType var,Expressions *exp) {
 	}
 	else if (head->var == var) {
 		head->degree += degree;
+		return 0;
 	}
 	else {
 		ptr = head->son;
@@ -188,6 +192,7 @@ int addVariableToExpression(PolyType degree, PolyVarType var,Expressions *exp) {
 			if (head->var == var) {
 				head->degree += degree;
 				flag = 1;
+				return 0;
 				break;
 			}
 			else if (ptr->var > var && head->var < var) {
@@ -197,6 +202,7 @@ int addVariableToExpression(PolyType degree, PolyVarType var,Expressions *exp) {
 				newVarNode->son = ptr;
 				head->son = newVarNode;
 				flag = 1;
+				return 0;
 				break;
 			}
 			else {
@@ -204,7 +210,7 @@ int addVariableToExpression(PolyType degree, PolyVarType var,Expressions *exp) {
 				ptr = ptr->son;
 			}
 		}
-		if (head->var == var) {
+		if (head->var == var && flag == 0) {
 			head->degree += degree;
 		}
 		else if (flag == 0) {
@@ -264,6 +270,7 @@ Expressions * mul(Expressions *exp1, Expressions *exp2)
 		else
 			add(head, temp_head);
 	}
+	expressionZeroEliminator(head);
 	return head;
 }
 
@@ -292,3 +299,40 @@ void sub(Expressions* exp1, Expressions* exp2) {
 	}
 }
 */
+
+void expressionZeroEliminator(Expressions *&expHead)
+{
+	Expressions *exp = expHead;
+	Expressions *ptr;
+	if (exp == NULL) {
+		return;
+	}
+	else if (exp->coeff == 0) {
+		while (exp->coeff == 0) {
+			expHead = expHead->next;
+			freePolyList(exp->son);
+			free(exp);
+			exp = expHead;
+			if (expHead == NULL) {
+				return;
+			}
+		}
+		
+	}
+	ptr = exp->next;
+	
+	while (ptr)
+	{
+		if (ptr->coeff == 0) {
+			exp->next = ptr->next;
+			freePolyList(ptr->son);
+			free(ptr);
+			ptr = exp->next;
+		}
+		else {
+			exp = ptr;
+			ptr = ptr->next;
+		}
+		
+	}
+}

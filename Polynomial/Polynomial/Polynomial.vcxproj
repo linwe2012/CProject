@@ -69,7 +69,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);E:\includes\include;</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;E:\includes\lib</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -116,8 +119,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="command.cpp" />
+    <ClCompile Include="errorDealer.cpp" />
     <ClCompile Include="Expression.cpp" />
     <ClCompile Include="ExpressionSet.cpp" />
+    <ClCompile Include="initialiers.cpp" />
     <ClCompile Include="IOControl.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PolishReverse.cpp" />
@@ -126,8 +131,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="command.h" />
+    <ClInclude Include="errorDealer.h" />
     <ClInclude Include="Expression.h" />
     <ClInclude Include="ExpressionSet.h" />
+    <ClInclude Include="initializer.h" />
     <ClInclude Include="IOControl.h" />
     <ClInclude Include="ListsData.h" />
     <ClInclude Include="PolishReverse.h" />

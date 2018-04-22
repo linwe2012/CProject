@@ -73,6 +73,11 @@ void deleteOperatorStack(OperatorStack *s)
 	free(s);
 }
 
+void clearOperatorStack(OperatorStack *s)
+{
+	s->top = s->base;
+}
+
 OperatorType revealOperatorTop(OperatorStack *s)
 {
 	return *(s->top-1);
@@ -139,6 +144,10 @@ void deleteFragmenStack(FragmentStack *s)
 	free(s);
 }
 
+void clearFragmentStack(FragmentStack *s)
+{
+	s->top = s->base;
+}
 
 int stackLen(FragmentStack *s)
 {

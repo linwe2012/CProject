@@ -1,10 +1,15 @@
 #include "IOControl.h"
 #include "PolishReverse.h"
 #include <windows.h>
+#include  <io.h>
 #include "command.h"
 
 static FILE *globe_fp;
 bool isFundamentalOperator(char c);
+char bufferDir[20] = "./src/buf.data";
+char bufferIDDir[20] = "./src/buf.idx";
+char savDir[20] = "./src/sav.data";
+char savNameDir[20] = "./src/sav.idx";
 
 char* fgetExpression(char *buffer, const char *address) 
 {
@@ -200,6 +205,66 @@ int fwriteExpression_ID(ExpressionSets *exps,const char *FileAddress) {
 	return 0;
 }
 
+int fwriteExpressionSets(FILE *fp, FILE *fp_idx, ExpressionSets *exps, long &offset, int IOMode)
+{
+	static long next_place = sizeof(exps->ID) + sizeof(exps->name) + sizeof(exps->varTable);
+	static long idx_offset;
+	int fileMode;
+	int count, count_exp, count_var;
+	int i, j, k;
+	char nameBuffer;
+	long myOffset;
+	int ID;
+	int writeInBuffer[2];
+	ExpressionSets *myexps;
+	ExpressionSetsElem *moveable_base = exps->base;
+	/*
+	FILE *fp,*fp_idx;
+	ExpressionSets *exps1 = (ExpressionSets *)malloc(expressionSetsSize);
+	if (_access(FileName, 0) == -1) {
+		fopen_s(&fp, FileName, "wb");
+	}
+	else
+	{
+		fopen_s(&fp, FileName, "rb+");
+	}
+	
+	if (fp == NULL) {
+		throwError("fwriteExpression::Fails to open file at ", GREY);
+		puts();
+	}*/
+	if (*(exps->name) == '\0') {
+		idx_offset = sizeof(exps->name) + sizeof(exps->varTable);
+		fread(&fileMode, sizeof(int), 1,fp_idx);
+		if (fileMode != IOMode) {
+			return -1;
+		}
+		while (!feof(fp_idx)) {
+			fread(&ID, sizeof(int), 1, fp_idx);
+			fread(&myOffset, sizeof(long), 1, fp_idx);
+			if (ID == exps->ID) {
+				throwError("fwriteExpressionSets::Duplicated ID, fails to write in expression\n", GREY);
+				offset = myOffset;
+				return -1;
+			}
+		}
+		fseek(fp, 0, SEEK_END);
+		count = 0;
+		while (moveable_base < exps->top) {
+			count++;
+		}
+		fwrite(&count, sizeof(int), 1, fp);
+		fwrite(&(exps->ID), sizeof(int), 1, fp);
+		for (i = 0; i < count; i++) {
+			;
+		}
+	}
+	else {
+		idx_offset = sizeof(exps->ID) + 1;
+	}
+	return 0;
+
+}
 
 int stringLegalchecker(char*s) 
 {
@@ -342,6 +407,14 @@ void expressionAutoCorrector(char *s) {
 				i = i + 1;
 				continue;
 			}
+			k = i + 1;
+			if (s[k] == '^' || s[k] == '*' || s[k] == '+') {
+				s[j++] = s[i];
+				while (s[k] == '^' || s[k] == '*' || s[k] == '+') {
+					k++;
+				}
+				i = k - 1;
+			}
 		}
 		if (isNumber(c) || isOperator(c) || isVariable(c))
 		{
@@ -416,7 +489,7 @@ int parentheseAutoAdder(char *s, int num, int maxBuffer)
 			return -1;
 		}
 		else {
-			for (i = count - 1; i >= offset; i--) {
+			for (i = count; i >= offset; i--) {
 				s[i] = s[i - 1];
 			}
 			if (isOp) {
@@ -433,6 +506,7 @@ int parentheseAutoAdder(char *s, int num, int maxBuffer)
 			throwError("parentheseAutoAdder::Exceeds max buffer\n", GREY);
 			return -1;
 		}
+		s[count + num - 1] = '\0';
 		for (i = num; i > 0; i--) {
 			s[count + i - 2] = ')';
 		}

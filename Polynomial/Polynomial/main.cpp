@@ -1,45 +1,88 @@
 #include <stdio.h>
 #include <windows.h>
 #include <math.h>
+//#include <pthread.h>
 #include "PolishReverse.h"
 #include "IOControl.h"
 #include "command.h"
 #include "ExpressionSet.h"
 #include "PolyCalculator.h"
+#include "initializer.h"
+#include "errorDealer.h"
 
+//#pragma comment(lib,"pthreadVC2.lib") 
+
+//struct parameter {
+//	FragmentStack *frag;
+//	ExpresionBuffer *expb;
+//} para;
+//(x+y)(x-y)(a+b+c)
 int analysisString(char *s);
 void initialCongratulate();
 int cal(FragmentStack *frag, ExpresionBuffer *expb);
+//void thread1(struct parameter *para);
 
 int main()
 {
 	OperatorStack opStack;
 	FragmentStack fragStack;
 	ExpresionBuffer expBuffer;
+
+	ExpressionSets *exps1;
+	Expressions *exp1;
+	
 	char buffer[MAX_BUFFER];
+	char tempBuffer[MAX_BUFFER];
 	int i = 0;
+
+	//pthread_t thd1;
 	
 	initCommand();
 	initialCongratulate();
 	initExpressionBuffer(&expBuffer);
 
+	initFragmentStack(&fragStack);
+	initOperatorStack(&opStack);
+
+	initIOControl();
+
+	cleanUp(true, &opStack, &fragStack);
+	//setMyCurrentConsolefont();
+
+	setSignalHandler();
+	setjmp(jmp_to_begin);
 
 	while (1) {
-		fgets(buffer, MAX_BUFFER, stdin);
-		if (*buffer == '\\') {
-			i = cmdDealer(buffer + 1, &expBuffer);
+		fgets(tempBuffer, MAX_BUFFER, stdin);
+		if (*tempBuffer == '\\') {
+			i = cmdDealer(tempBuffer + 1, &expBuffer, &fragStack, buffer);
 			if (i >= 0) {
 				//printExpressionID(&expBuffer);
 			}
 		}
 		else {
-			if (analysisString(buffer) == 0) {
-				initFragmentStack(&fragStack);
-				initOperatorStack(&opStack);
-				RPN(buffer, &opStack, &fragStack);
-				printRPN(&fragStack, buffer);
-				cal(&fragStack, &expBuffer);
+			compactArray(tempBuffer, ' ');
+			if (*(tempBuffer + 1) == '=') {
+				//printf("%s", tempBuffer);
+				varValueControl(getCurrentBufferExpressionSets(&expBuffer), &expBuffer, tempBuffer);
 			}
+			else {
+				strcpy_s(buffer, tempBuffer);
+				if (analysisString(buffer) == 0) {
+					clearOperatorStack(&opStack);
+					clearFragmentStack(&fragStack);
+					clearVarValue();
+					RPN(buffer, &opStack, &fragStack);
+					//printRPN(&fragStack, buffer);
+
+					cal(&fragStack, &expBuffer);
+					exps1 = getCurrentBufferExpressionSets(&expBuffer);
+					exp1 = expressionDuplicate(*(exps1->base));
+					//printExpression(exp1);
+					//printBufferCurrentOffset(&expBuffer);
+				}
+			}
+			
 		}
 	}
 
@@ -48,44 +91,35 @@ int main()
 
 int analysisString(char *s) {
 	int temp;
-	
-	compactArray(s, ' ');
-	if (*(s + 1) == '=') {
-
+	if (cmd_autoCorrect == CMD_TRUE) {
+		expressionAutoCorrector(s);
 	}
-	else
-	{
-		
-		if (cmd_autoCorrect == CMD_TRUE) {
-			expressionAutoCorrector(s);
-		}
-		temp = parentheseCherker(s);
-		if (cmd_autoParenthese == CMD_TRUE) {
-			if ((temp = parentheseAutoAdder(s, temp, MAX_BUFFER)) == -1) {
-				return -1;
-			}
-			else if(temp == 1)
-			{
-				throwError("analysisString::Elements are auto added. the Expresion is currently:\n", GREY);
-				puts(s);
-			}
-		}
-		else if (temp != 0) {
-			if (temp > 0)
-				throwError("analysisString::Expected right parenthese ')'.\n", GREY);
-			else
-				throwError("analysisString::Expected left parenthese '('.\n", GREY);
+	temp = parentheseCherker(s);
+	if (cmd_autoParenthese == CMD_TRUE) {
+		if ((temp = parentheseAutoAdder(s, temp, MAX_BUFFER)) == -1) {
 			return -1;
 		}
+		else if(temp == 1)
+		{
+			throwError("analysisString::Elements are auto added. the Expresion is currently:\n", GREY);
+			puts(s);
+		}
+	}
+	else if (temp != 0) {
+		if (temp > 0)
+			throwError("analysisString::Expected right parenthese ')'.\n", GREY);
+		else
+			throwError("analysisString::Expected left parenthese '('.\n", GREY);
+		return -1;
+	}
 
-		if(cmd_autoCorrect == CMD_FALSE || cmd_autoParenthese == CMD_FALSE) {
-			if (stringLegalchecker(s) != 0) {
-				throwError("analysisString::The expression contains illegal character. Input again or turn on auto-corrector\n", GREY);
-				return -1;
-			}
-			else {
-				;
-			}
+	if(cmd_autoCorrect == CMD_FALSE || cmd_autoParenthese == CMD_FALSE) {
+		if (stringLegalchecker(s) != 0) {
+			throwError("analysisString::The expression contains illegal character. Input again or turn on auto-corrector\n", GREY);
+			return -1;
+		}
+		else {
+			;
 		}
 	}
 	return 0;
@@ -129,12 +163,13 @@ void initialCongratulate()
 int cal(FragmentStack *frag,ExpresionBuffer *expb)
 {
 	FragmentType *moveable_Base;
-	Expressions *exp1, *exp2, *exp_temp, *exp3, *exp_multi;
+	static Expressions *exp1, *exp2, *exp_temp, *exp3;
 	ExpressionSets *exps;
-	ExpressionSets *expStack;
+	static ExpressionSets *expStack;
 	char c;
 	int num;
 	initVar();
+	cleanUpHalfTime(true, &exp1, &exp2, &exp_temp, &exp3, &expStack);
 	exps = initExpressiosSets(true,NULL);
 	expStack = initExpressiosSets(false, NULL, 5);
 	moveable_Base = frag->base;
@@ -155,12 +190,16 @@ int cal(FragmentStack *frag,ExpresionBuffer *expb)
 				}
 				else if (exp1->next == NULL && exp1->son->son == NULL) {
 					exp1->son->degree *= num;
-					exp1->coeff = pow(exp1->coeff, num);
+					exp1->coeff = int(pow(exp1->coeff, num));
 					pushExpressiosSets(expStack, exp1);
 				}
 				else {
 					//exp2 = expressionDuplicate(exp1);
 					exp3 = exp2 = mul(exp1, exp1);
+					//printf("(^)expStack = ");
+					//printExpressionSet_all(expStack);
+					//printf("^\n");
+
 					for (; num > 2; num--) {
 						exp3 = mul(exp2, exp1);
 						freeExpression(exp2);
@@ -169,9 +208,7 @@ int cal(FragmentStack *frag,ExpresionBuffer *expb)
 					pushExpressiosSets(expStack, exp3);
 				}
 				
-				//printf("(^)expStack = ");
-				//printExpressionSet_all(expStack);
-				//printf("^\n");
+				
 			}
 			else if (c == '+') {
 				exp2 = popExpressiosSets(expStack);
@@ -232,11 +269,18 @@ int cal(FragmentStack *frag,ExpresionBuffer *expb)
 		}
 		moveable_Base++;
 	}
-	exps->base = exps->top = expStack->base;
+	pushExpressiosSets(exps, *(expStack->base));
+	expressionSetsVarCpy(exps);
 	//lift its base so that the expression at the base won't be freed
 	(expStack->base)++;
 	freeExpressionSets(expStack);
 	pushExpressionBuffer(expb, exps, true);
 	printBufferCurrentOffset(expb);
+	//cmdDraw(0, 1, 1, 50, 0, 0, exps);
 	return 0;
 }
+
+//void thread1(struct parameter *para)
+//{
+//	cal(para->frag, para->expb);
+//}
