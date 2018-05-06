@@ -13,6 +13,14 @@
 #define DEFALT_TEMP_FILE_LOCATION "./res/temp.exp"
 #define DEFALT_BUFFER_FILE_LOCATION "./res/temp.exp"
 
+extern char bufferDir[20];
+extern char bufferIDDir[20];
+extern char savDir[20];
+extern char savNameDir[20];
+
+#define SAVE_AUTO_ID 1
+#define SAVE_AUTO_NAME 2
+#define IOMODE_A 1
 /**
 * @brief: 
 * @param [in] exp1: 
@@ -39,6 +47,19 @@ int parentheseAutoAdder(char *s, int num, int maxBuffer);
 inline bool isFundamentalOperator(char c);
 ExpressionSets *freadExpression(int ID, const char *FileAddress);
 void throwError(const char*errorLog, int color);
+
+
+int savExpressionSet(ExpressionSets *exps, int SaveMode, int IOMode, char *FileName = NULL, char *File_idx_Name = NULL);
+ExpressionSets *freadExpressionSets(ExpressionSets *&exps,
+	int SaveMode,
+	int IOMode,
+	int ID,
+	const char *name,
+	const char *FileName = NULL,
+	const char *File_idx_Name = NULL,
+	bool hasID = true);
+
+//don't use function down there
 /**
 * @brief: write in Expression According to name, usually saved by user
 * @param [in] exps: a pointer to expression set to be written;
@@ -58,8 +79,15 @@ void fwriteExpression_name(ExpressionSets *exps, const char *FileAddress);
 */
 int fwriteExpression_ID(ExpressionSets *exps, const char *FileAddress);
 
-
-
+/**
+* @brief: write in expression without id, name or count
+* @param [in] exps: a pointer to expression set to be written;
+* @exception
+* @note: it should not be used without calling other function
+*/
+void fwriteAnExpression(FILE *fp, ExpressionSets *exps);
+void freadAnExpression(FILE *fp, ExpressionSets *&exps, bool hasID);
+int fwriteExpressionSets(FILE *fp, FILE *fp_idx, ExpressionSets *exps, long &offset, int IOMode);
 
 
 

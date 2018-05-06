@@ -5,11 +5,12 @@
 #define CMD_DEFAULT_TIME_LIMIT 6
 #define GREY 8
 #define WHITE 7
-#define LIGHT_WHITE
+#define LIGHT_WHITE 0xF
 #define RED 4
 #define BLUE 1
 #define LIGHT_BLUE 9
 #define YELLOW 6
+#define MAX_CMD 25
 #include "ExpressionSet.h"
 #include "PolishReverse.h"
 
@@ -23,7 +24,7 @@ extern double cmd_ErrorTimeGap;
 extern int cmd_errorOccurance;
 
 int initCommand();
-int cmdDealer(char *s, ExpresionBuffer *expb, FragmentStack *frag, char *bufferHead);
+int cmdDealer(char *s, ExpresionBuffer *expb, FragmentStack *frag, OperatorStack *opStack, char *bufferHead);
 void throwError(const char*errorLog, int color);
 void cmdDraw(PolyVarType x, PolyVarType y, PolyType step, PolyType range, PolyType offset_x, PolyType offset_y, ExpressionSets *exps);
 /**
@@ -63,6 +64,35 @@ T cmdGetNum(char *&s)
 		}
 	}
 	return T(flag * res);
+}
+
+template <typename T1>
+T1 cmdGetNum_static(const char *s)
+{
+	T1 res = 0;
+	int flag = 1;
+	T1 denominator = 10;
+	if (*s != '\0' && *s != '\n') {
+		s++;
+		if (*s == '-') {
+			flag = -flag;
+		}
+		res = 0;
+		while (*s >= '0' && *s <= '9') {
+			res = res * 10 + *s - '0';
+			s++;
+		}
+		if (*s == '.')
+		{
+			s++;
+			while (*s >= '0' && *s <= '9') {
+				res = res + (*s - '0') / denominator;
+				s++;
+				denominator *= 10;
+			}
+		}
+	}
+	return T1(flag * res);
 }
 
 /**

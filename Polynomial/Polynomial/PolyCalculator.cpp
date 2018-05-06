@@ -1,6 +1,12 @@
 #include "PolyCalculator.h"
+#include "ExpressionSet.h"
+#include "PolishReverse.h"
+#include "command.h"
+#include "errorDealer.h"
+#include "IOControl.h"
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 //-1:p1 behind p2
 //0: p1 = p2
@@ -69,13 +75,14 @@ void add(Expressions* &exp1, Expressions* &exp2)
 	Expressions*p1, *p2, *exp1_next = NULL;
 	int temp;
 	Expressions *exp1_dup = exp1;
-
+	//make sure exp1 has a higher or equal priority
 	if (exp1 && exp2 && compare(exp2, exp1) > 0) {
 		p1 = exp1;
 		exp1 = exp2;
 		exp2 = p1;
 		exp1_dup = exp1;
 	}
+	//merge all the same priority at the head
 	else {
 		while (exp1_dup && exp2 && compare(exp2, exp1_dup) == 0) {
 			exp1_dup->coeff += exp2->coeff;
@@ -107,7 +114,6 @@ void add(Expressions* &exp1, Expressions* &exp2)
 				exp1_dup->next = exp2;
 				exp1_dup = exp1_dup->next;
 				exp2 = exp2->next;
-				//printf("absorb  ");
 			}
 		}
 		//exp1.next redirect to original next
@@ -117,7 +123,7 @@ void add(Expressions* &exp1, Expressions* &exp2)
 		}
 		p1 = exp1_dup;
 	}
-	if (exp2 != NULL) {
+	if (exp2 != NULL && exp1_dup) {
 		exp1_dup->next = exp2;
 	}
 	if(exp1 != NULL)
@@ -335,4 +341,196 @@ void expressionZeroEliminator(Expressions *&expHead)
 		}
 		
 	}
+}
+
+void getNumberSignContent(char *s, ExpressionSets *&exps, ExpresionBuffer *expb)
+{
+	int mID;
+	char name[MAX_NAME];
+	int i;
+	s++;
+	if (isNumber(*s) == true) {
+		mID = cmdGetNum<int>(s);
+		if (mID <= 0 || mID > globe_ID) {
+			throwError("getNumberSignContent::ID exceeds limit\n", GREY);
+			return;
+		}
+		exps = getExpressionSet(mID, expb, true);
+	}
+	else if (isVariable(*s)) {
+		i = 0;
+		while ((isVariable(*s)) && i < MAX_NAME) {
+			name[i++] = *s;
+		}
+		exps = getExpressionSet(0, expb, true);
+	}
+}
+
+
+int analysisString(char *s) {
+	int temp;
+	if (cmd_autoCorrect == CMD_TRUE) {
+		expressionAutoCorrector(s);
+	}
+	temp = parentheseCherker(s);
+	if (cmd_autoParenthese == CMD_TRUE) {
+		if ((temp = parentheseAutoAdder(s, temp, MAX_BUFFER)) == -1) {
+			return -1;
+		}
+		else if (temp == 1)
+		{
+			throwError("analysisString::Elements are auto added. the Expresion is currently:\n", GREY);
+			puts(s);
+		}
+	}
+	else if (temp != 0) {
+		if (temp > 0)
+			throwError("analysisString::Expected right parenthese ')'.\n", GREY);
+		else
+			throwError("analysisString::Expected left parenthese '('.\n", GREY);
+		return -1;
+	}
+
+	if (cmd_autoCorrect == CMD_FALSE || cmd_autoParenthese == CMD_FALSE) {
+		if (stringLegalchecker(s) != 0) {
+			throwError("analysisString::The expression contains illegal character. Input again or turn on auto-corrector\n", GREY);
+			return -1;
+		}
+		else {
+			;
+		}
+	}
+	return 0;
+}
+
+
+
+
+//1+2x+3x^2+4x
+int cal(FragmentStack *frag, ExpresionBuffer *expb)
+{
+	FragmentType *moveable_Base;
+	static Expressions *exp1, *exp2, *exp_temp, *exp3;
+	ExpressionSets *exps;
+	static ExpressionSets *expStack;
+	char c;
+	int num;
+	initVar();
+	cleanUpHalfTime(true, &exp1, &exp2, &exp_temp, &exp3, &expStack);
+	exps = initExpressiosSets(true, NULL);
+	expStack = initExpressiosSets(false, NULL, 5);
+	moveable_Base = frag->base;
+	/*
+	exp_temp = newExpression(*moveable_Base);
+	pushExpressiosSets(expStack, exp_temp);
+	moveable_Base++;*/
+	while ((moveable_Base < frag->top)) {
+		if (isOperator(**moveable_Base)) {
+			c = **moveable_Base;
+			if (c == '^') {
+				exp2 = popExpressiosSets(expStack);
+				exp1 = popExpressiosSets(expStack);
+				num = exp2->coeff;
+				freeExpression(exp2);
+				if (num == 1) {
+					pushExpressiosSets(expStack, exp1);
+				}
+				else if (exp1->next == NULL && exp1->son->son == NULL) {
+					exp1->son->degree *= num;
+					exp1->coeff = int(pow(exp1->coeff, num));
+					pushExpressiosSets(expStack, exp1);
+				}
+				else {
+					//exp2 = expressionDuplicate(exp1);
+					exp3 = exp2 = mul(exp1, exp1);
+					//printf("(^)expStack = ");
+					//printExpressionSet_all(expStack);
+					//printf("^\n");
+
+					for (; num > 2; num--) {
+						exp3 = mul(exp2, exp1);
+						freeExpression(exp2);
+						exp2 = exp3;
+					}
+					pushExpressiosSets(expStack, exp3);
+				}
+
+
+			}
+			else if (c == '+') {
+				exp2 = popExpressiosSets(expStack);
+				exp1 = popExpressiosSets(expStack);
+				//printf("prepare add ");
+				add(exp1, exp2);
+				//printf("add finish");
+				//printf("(+)exp1 = ");
+				//1+(x+2y)^2
+				//printExpression(exp1);
+				pushExpressiosSets(expStack, exp1);
+
+				//printf("(+)expStack = ");
+				//printExpressionSet_all(expStack);
+
+				exp1 = NULL;
+				//printf("+\n");
+			}
+			//1+(5x+6)-7abc(dsjhhu+sgh)
+			else if (c == '-') {
+				exp2 = popExpressiosSets(expStack);
+				exp1 = popExpressiosSets(expStack);
+				sub(exp1, exp2);
+				pushExpressiosSets(expStack, exp1);
+
+				//printf("(-)expStack = ");
+				//printExpressionSet_all(expStack);
+				//printf("-\n");
+			}
+			else if (c == '*') {
+				exp2 = popExpressiosSets(expStack);
+				exp1 = popExpressiosSets(expStack);
+				exp3 = mul(exp1, exp2);
+				pushExpressiosSets(expStack, exp3);
+
+				//printf("(*)expStack = ");
+				//printExpressionSet_all(expStack);
+
+				freeExpression(exp1);
+				freeExpression(exp2);
+				exp3 = NULL;
+				//printf("*\n");
+			}
+			else if (c == '~') {
+				exp1 = (*(expStack->top - 1));
+				while (exp1) {
+					exp1->coeff = -exp1->coeff;
+					exp1 = exp1->next;
+				}
+			}
+			
+		}
+		else {
+			if (**moveable_Base == '#') {
+				pushNumberSignToExpression(*moveable_Base, expStack, expb);
+			}
+			else {
+				exp_temp = newExpression(*moveable_Base);
+				pushExpressiosSets(expStack, exp_temp);
+			}
+			
+			//printf("(add)expStack = ");
+			//printExpressionSet_all(expStack);
+			//printf("size = %d  \n", expStack->top - expStack->base);
+		}
+		moveable_Base++;
+	}
+	pushExpressiosSets(exps, *(expStack->base));
+	expressionSetsVarCpy(exps);
+	//lift its base so that the expression at the base won't be freed
+	(expStack->base)++;
+	freeExpressionSets(expStack);
+	printExpressionSet(exps);
+	pushExpressionBuffer(expb, exps, true);
+	//printBufferCurrentOffset(expb);
+	//cmdDraw(0, 1, 1, 50, 0, 0, exps);
+	return 0;
 }

@@ -9,7 +9,12 @@
 extern std::jmp_buf jmp_to_begin;
 
 void setSignalHandler();
-
+/**
+* @brief: clean up the mess when the calculation stops half way
+* @param [in] ifRegister: whether to register stuff to be cleaned up, if is false, then it will try to clean up
+* @exception
+* @note: 
+*/
 void cleanUpHalfTime(bool ifRegister = false, 
 	Expressions **exp1 = NULL, 
 	Expressions **exp2 = NULL, 

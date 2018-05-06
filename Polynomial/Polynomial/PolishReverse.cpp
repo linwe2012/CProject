@@ -197,8 +197,9 @@ void RPN(char *s, OperatorStack *op, FragmentStack *frag)
 			// -5^8abc  -5^(abc+2)abc  a^-5abc
 			while (isOperator(*s) == false) {
 
-				if (!isStringEnd(*(s + 1)) && !isOperator(*(s + 1)) && isNumber(*s) != isNumber(*(s + 1)) ||
-					!isStringEnd(*(s + 2)) && isVariable(*(s+1)) && *(s+2) == '^') {
+				if (!isStringEnd(*(s + 1)) && !isOperator(*(s + 1)) && (isNumber(*s) != isNumber(*(s + 1)) && *s != '#') ||
+					!isStringEnd(*(s + 2)) && isVariable(*(s+1)) && *(s+2) == '^' ||
+					(*(s+1) == '#' && (isVariable(*s) || isNumber(*s))) ) {
 					s++;
 					normalOpreaterDealer(autoMultiplyOperator, op, frag);
 					pushFragmentStack(frag, s);
@@ -271,7 +272,7 @@ void RPN(char *s, OperatorStack *op, FragmentStack *frag)
 
 bool isStringEnd(char c)
 {
-	if (c == '#' || c == '\n' || c == '\0') {
+	if (c == '\n' || c == '\0') {
 		return true;
 	}
 	else
@@ -279,7 +280,7 @@ bool isStringEnd(char c)
 }
 bool isOperator(char c) 
 {
-	if (c == '*' || c == '-' || c == '^' || c == '+' || c == '(' || c == ')' || c == '^') {
+	if (c == '*' || c == '-' || c == '^' || c == '+' || c == '(' || c == ')' ) {
 		return true;
 	}
 	else
@@ -287,7 +288,7 @@ bool isOperator(char c)
 }
 bool isNumber(char c)
 {
-	if (c <= '9' && c >= '0')
+	if ((c <= '9' && c >= '0') || c == '#')
 	{
 		return true;
 	}
@@ -299,7 +300,7 @@ bool isNumber(char c)
 
 bool isVariable(char c)
 {
-	if ((c <= 'z' && c >= 'a') || (c <= 'Z'&&c >= 'A')) {
+	if ((c <= 'z' && c >= 'a') || (c <= 'Z'&&c >= 'A') || c == '#') {
 		return true;
 	}
 	else
@@ -329,7 +330,7 @@ void printRPN(FragmentStack *frag, char *head) {
 	while ((moveable_Base < frag->top)) {
 		s = *(moveable_Base);
 		printf("%c", *s);
-		if (!isStringEnd(*(s + 1)) && !isOperator(*(s + 1)) && isNumber(*s) != isNumber(*(s + 1)) ||
+		if (!isStringEnd(*(s + 1)) && !isOperator(*(s + 1)) && isNumber(*s) != isNumber(*(s + 1)) && *s != '#'  ||
 			!isStringEnd(*(s + 2)) && isVariable(*(s + 1)) && *(s + 2) == '^') {
 			;
 		}
@@ -353,5 +354,6 @@ void printRPN(FragmentStack *frag, char *head) {
 	}
 	printf("\n");
 }
+
 
 //abc^2+abc*2(abc+a7x)^54abc

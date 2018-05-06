@@ -1,6 +1,7 @@
 #ifndef _POLYCALCULATOR_H_
 #define _POLYCALCULATOR_H_
-#include "ListsData.h"
+#include "ExpressionSet.h"
+#include "PolishReverse.h"
 /**
 * @brief: add expression2 to expresion1
 * @param [in] exp1: a pointer to a lists of expression, it will store the result;
@@ -40,5 +41,8 @@ Expressions * mul(Expressions *exp1, Expressions *exp2);
 */
 int compare(Expressions* p1, Expressions* p2);
 void expressionZeroEliminator(Expressions *&expHead);
+int analysisString(char *s);
+void initialCongratulate();
+int cal(FragmentStack *frag, ExpresionBuffer *expb);
 #endif // !_POLYCALCULATOR_H_
 

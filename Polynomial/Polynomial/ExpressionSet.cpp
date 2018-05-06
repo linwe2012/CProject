@@ -2,6 +2,7 @@
 #include "command.h"
 #include "IOControl.h"
 #include "PolyCalculator.h"
+#include "initializer.h"
 #include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,11 +17,12 @@
 
 int expressionSetsSize = sizeof(ExpressionSets);
 int expressionBufferSize = sizeof(ExpresionBuffer);
+//note that globe_id always stores a future ID to be used
 int globe_ID;
 
 void initExpressionBuffer(ExpresionBuffer *expb)
 {
-	globe_ID = 1;
+	
 	expb->base = (ExpresionBufferElem *)malloc(EXPRESSION_MAX_BUFFER * expressionSetsSize);
 	if (expb == NULL) {
 		throwError("initExpressionBuffer::fails to initialize expresion buffer. The program will end.\n", RED);
@@ -37,7 +39,8 @@ void pushExpressionBuffer(ExpresionBuffer *expb, ExpresionBufferElem exps, bool 
 {
 	int stackSize = expb->maxSize;
 	if (ifSave && cmd_autoSave == CMD_TRUE) {
-		//fwriteExpression_ID(exps, DEFAULT_BUFFER_FILE_ADDRESS);
+		savExpressionSet(exps, SAVE_AUTO_ID, IOMODE_A);
+		preferenceUpadate(PREFERENCE_UPDATE_ID, &globe_ID);
 	}
 	if (expb->top - expb->base >= stackSize)
 	{
@@ -57,6 +60,33 @@ ExpressionSets *getCurrentBufferExpressionSets(ExpresionBuffer *expb)
 	if (expb->base == expb->top)
 		return NULL;
 	return *(expb->base + expb->offset - 1);
+}
+
+void expressionBufferOffsetUpdate(ExpresionBuffer *expb, int ID)
+{
+	ExpresionBufferElem *moveable_top = (expb->top);
+	while (moveable_top > expb->base) {
+		moveable_top--;
+		if ((*moveable_top)->ID == ID) {
+			expb->currentID = ID;
+			expb->offset = moveable_top - expb->base + 1;
+		}
+	}
+}
+//set the ID from zero, it will change globe ID
+void expressionBufferIDReset(ExpresionBuffer *expb)
+{
+	ExpresionBufferElem *moveable_base = expb->base;
+	int i = 1;
+	while (moveable_base < expb->top) {
+		if (expb->currentID == (*moveable_base)->ID) {
+			expb->currentID = i;
+		}
+		(*moveable_base)->ID = i;
+		i++;
+		moveable_base++;
+	}
+	globe_ID = i;
 }
 
 ExpressionSets *initExpressiosSets(bool hasID, ExpressionSets *exps,  int initSize)
@@ -131,6 +161,57 @@ void freeExpressionSets(ExpressionSets *&exps)
 		freeExpression(exp);
 	}
 	free(exps);
+}
+
+int nameExpressionSet(ExpressionSets *exps, char *name)
+{
+	int i = 0;
+	char *expsn = exps->name;
+	char *head = name;
+	int res = 0;
+	while (!isStringEnd(*name)) {
+		if(isLegalExpressionSetNameChar(*name))
+			expsn[i++] = *name;
+		name++;
+	}
+	if (head - name > i) {
+
+	}
+	expsn = '\0';
+	if (isStringEnd(*head))
+	{
+		for (i = 0; i < MAX_NAME - 1; i++)
+			expsn[i] = getRandomLetter();
+		expsn[i] = '\0';
+		return -1;
+	}
+	return 0;
+}
+
+//it will stop at non-alphabet
+void nameLegalizeCpy(char *destination, const char *source) {
+	int i = 0;
+	while (isLegalExpressionSetNameChar(*source)) {
+		destination[i++] = *source;
+		source++;
+	}
+	destination[i] = '\0';
+}
+
+bool isLegalExpressionSetNameChar(char c)
+{
+	return ((c <= 'z' && c >= 'a') || (c <= 'Z' && c >= 'A'));
+}
+
+char getRandomLetter()
+{
+	int num = rand() % (26 * 2 - 2);
+	if (num < 26) {
+		return num + 'a';
+	}
+	else {
+		return num - 26 + 'A';
+	}
 }
 
 void caluclateExpression(ExpressionSets *exps)
@@ -253,6 +334,12 @@ void clearVarValue()
 		varValueConfig[i] = false;
 	}
 }
+void clearVarTable()
+{
+	for (int i = 0; i < MAXVAR; i++) {
+		varTable[i] = -1;
+	}
+}
 
 
 void printBufferCurrentOffset(ExpresionBuffer *expb)
@@ -262,10 +349,15 @@ void printBufferCurrentOffset(ExpresionBuffer *expb)
 
 void printExpressionSet(ExpressionSets *exps)
 {
-	//HANDLE hwdl = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE hwdl = GetStdHandle(STD_OUTPUT_HANDLE);
 	Expressions *exp = *(exps->base);
 	//Poly *ptr;
 	printExpression(exp);
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(hwdl, GREY);
+	printf(" (ID: %d)\n", exps->ID);
+	if (cmd_color == CMD_TRUE)
+		SetConsoleTextAttribute(hwdl, WHITE);
 	/*
 	while (exp != NULL) {
 		if (cmd_color == CMD_TRUE)
@@ -347,7 +439,6 @@ void printExpression(Expressions *exp)
 
 		exp = exp->next;
 	}
-	printf("\n");
 	if (cmd_color == CMD_TRUE)
 		SetConsoleTextAttribute(hwdl, WHITE);
 }
@@ -362,6 +453,25 @@ void printExpressionSet_all(ExpressionSets *exps)
 		movealbe_base++;
 		i++;
 	}
+}
+
+void printfAllBuffer(ExpresionBuffer *expb)
+{
+	ExpresionBufferElem *moveable_top;
+	int i = 0;
+	printf("Current Offset = %d\n", expb->offset);
+	printf("Current ID = %d\n", expb->currentID);
+	moveable_top = expb->top;
+	if (moveable_top == expb->base) {
+		printf("No expresson in the buffer\n");
+		return;
+	}
+	while (moveable_top > expb->base) {
+		moveable_top--;
+		printf("The %d expression: ", i);
+		printExpressionSet(*moveable_top);
+	}
+	printf("\n");
 }
 
 int varTableCheck(ExpressionSets *exps, char var)
@@ -397,8 +507,79 @@ void expressionSetsVarSync(ExpressionSets *exps) {
 		i++;
 	}
 }
+/*
+ExpressionSets *expressionSetsVarAdder(ExpressionSets *exps)
+{
+	int i = 0;
+	int j;
+	PolyVarType ref[MAXVAR] = { -1 };
+	ExpressionSetsElem *moveable_base;
+	Expressions *exp, *exp_temp;
+	Poly *mpoly;
+	exp_temp->next = NULL;
 
-ExpressionSets *expressionSetsDuplicate(ExpressionSets *Source) {
+	while (i < MAXVAR && (exps->varTable)[i] != -1) {
+		j = 0;
+		while ((exps->varTable)[i] != varTable[j] && varTable[j] != -1) {
+			j++;
+		}
+		if (varTable[j] == -1) {
+			varTable[j] = (exps->varTable)[i];
+			varTable[j + 1] = -1;
+		}
+		ref[i] = j;
+		i++;
+	}
+	moveable_base = exps->base;
+	while (moveable_base < exps->top) {
+		exp = *moveable_base;
+		while (exp) {
+			mpoly = exp->son;
+			while (mpoly)
+			{
+				i = 0;
+				mpoly->var = ref[mpoly->var];
+				
+				mpoly = mpoly->son;
+			}
+			mpoly = exp_temp->son = exp->son;
+			exp->son = NULL;
+			while (mpoly) {
+				add
+				mpoly = mpoly->son;
+			}
+			exp = exp->next;
+		}
+		moveable_base++;
+	}
+
+}*/
+
+void expressionSetsVarAdder(ExpressionSets *exps)
+{
+	ExpressionSetsElem *moveable_base;
+	Expressions *exp;
+	Poly *mpoly, *mpolyHead;
+
+	moveable_base = exps->base;
+	while (moveable_base < exps->top) {
+		exp  = *moveable_base;
+		while (exp) {
+			mpoly = mpolyHead = exp->son;
+			exp->son = NULL;
+			while (mpoly) {
+				addNewVariable((exps->varTable)[mpoly->var], exp, mpoly->degree);
+				mpoly = mpoly->son;
+			}
+			freePolyList(mpolyHead);
+			exp = exp->next;
+		}
+		moveable_base++;
+	}
+	
+}
+
+ExpressionSets *expressionSetsDuplicate(ExpressionSets *Source, bool hasID) {
 	ExpressionSets *Destination;
 	ExpressionSetsElem exps;
 	int i = 0;
@@ -406,7 +587,7 @@ ExpressionSets *expressionSetsDuplicate(ExpressionSets *Source) {
 	if (Source == NULL) {
 		return NULL;
 	}
-	Destination = initExpressiosSets(true, NULL);
+	Destination = initExpressiosSets(hasID, NULL);
 	for (i = 0; i < MAXVAR; i++) {
 		Destination->varTable[i] = Source->varTable[i];
 	}
@@ -418,3 +599,106 @@ ExpressionSets *expressionSetsDuplicate(ExpressionSets *Source) {
 	return Destination;
 }
 
+ExpressionSets *getExpressionSet(int ID, ExpresionBuffer *expb, bool ifDuplicte, int *ifFromFile, char *name)
+{
+	ExpresionBufferElem *moveable_base = expb->base;
+	ExpressionSets *exps;
+	int flag = 0;
+	if (name == NULL) {
+		while (moveable_base < expb->top) {
+			if ((*moveable_base)->ID == ID) {
+				flag = 1;
+				if (ifDuplicte) {
+					exps = expressionSetsDuplicate(*moveable_base);
+				}
+				else
+				{
+					exps = *moveable_base;
+				}
+				if (ifFromFile != NULL) {
+					*ifFromFile = 0;
+				}
+				return exps;
+			}
+			moveable_base++;
+		}
+		if (!flag) {
+			if (ifFromFile != NULL) {
+				*ifFromFile = 1;
+			}
+			freadExpressionSets(exps, SAVE_AUTO_ID, IOMODE_A, ID, NULL);
+			return exps;
+		}
+	}
+	else if(name != NULL)
+	{
+		while (moveable_base < expb->top) {
+			if (strcmp((*moveable_base)->name, name) == 0) {
+				flag = 1;
+				if (ifDuplicte) {
+					exps = expressionSetsDuplicate(*moveable_base);
+				}
+				else
+				{
+					exps = *moveable_base;
+				}
+				if (ifFromFile != NULL) {
+					*ifFromFile = 0;
+				}
+				return exps;
+			}
+			moveable_base++;
+		}
+		if (!flag) {
+			if (ifFromFile != NULL) {
+				*ifFromFile = 1;
+			}
+			freadExpressionSets(exps, SAVE_AUTO_NAME, IOMODE_A, ID, name);
+			return exps;
+		}
+	}
+	return NULL;
+}
+
+void pushNumberSignToExpression(const char *s, ExpressionSets *exps, ExpresionBuffer *expb) 
+{
+	Expressions *mexp;
+	ExpressionSets *mexps = NULL;
+	ExpressionSetsElem *moveable_base;
+	int mID;
+	char name[MAX_NAME];
+	char c;
+	moveable_base = exps->base;
+	s++;
+	if (isOperator(*s)) {
+		mexps = expressionSetsDuplicate(getCurrentBufferExpressionSets(expb), false);
+	}
+	else if (isNumber(*s)) {
+		mID = cmdGetNum_static<int>(s-1);
+		if (mID <= 0) {
+			throwError("pushNumberSignToExpression::Wrong format of #\n", GREY);
+		}
+		else {
+			freadExpressionSets(mexps, SAVE_AUTO_ID, IOMODE_A, mID, NULL, NULL, NULL, false);
+		}
+	}
+	else if (isLegalExpressionSetNameChar(*s)) {
+		nameLegalizeCpy(name, s);
+		freadExpressionSets(mexps, SAVE_AUTO_NAME, IOMODE_A, 0, name, NULL, NULL, false);
+	}
+	if (mexps == NULL) {
+		return;
+	}
+	else {
+		//printExpressionSet(mexps);
+		expressionSetsVarAdder(mexps);
+		moveable_base = mexps->base;
+		while (moveable_base < mexps->top) {
+			pushExpressiosSets(exps, *moveable_base);
+			moveable_base++;
+		}
+		//it doesn't have to free the stuff it has stored;
+		free(mexps->base);
+		free(mexps);
+	}
+}

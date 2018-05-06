@@ -24,10 +24,18 @@ const char negationIdentifier[2] = "~";
 
 inline bool isNumber(char c);
 inline bool isOperator(char c);
-bool isVariable(char c);
-bool isStringEnd(char c);
-
+inline bool isVariable(char c);
+inline bool isStringEnd(char c);
+/**
+* @brief: disassemble string into stacks of pointers to the first of the fragment
+* @param [in] s: string to be disassembled
+* @param [in] op: operator Stack where operators are stored
+* @param [in] frag: fragment Stack where fragments(disassembled string) are stored
+* @exception
+* @note: 
+*/
 void RPN(char *s, OperatorStack *op, FragmentStack *frag);
+
 void initOperatorStack(OperatorStack *s);
 void clearOperatorStack(OperatorStack *s);
 void deleteOperatorStack(OperatorStack *s);
@@ -35,6 +43,7 @@ void deleteOperatorStack(OperatorStack *s);
 void initFragmentStack(FragmentStack *s);
 void clearFragmentStack(FragmentStack *s);
 void deleteFragmenStack(FragmentStack *s);
+
 
 void printRPN(FragmentStack *frag, char *head);
 

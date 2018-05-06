@@ -68,7 +68,7 @@ Expressions *newExpression(const char *s) {
 		newexp->coeff = getNextNum(s, &leap);
 	}
 	else {
-		while (isVariable(*s)) {
+		while (isVariable(*s) && *s != '#') {
 			newexp->coeff = 1;
 			addNewVariable(*s, newexp);
 			s++;
@@ -131,7 +131,7 @@ void freeExpression(Expressions *&head) {
 	}
 }
 
-int addNewVariable(const char var, Expressions *exp) {
+int addNewVariable(const char var, Expressions *exp, PolyVarType degree) {
 	bool isNewVar;
 	int varPriority = newVar(var, &isNewVar);
 	int flag = 0;
@@ -139,7 +139,7 @@ int addNewVariable(const char var, Expressions *exp) {
 	Poly *head = exp->son;
 
 	newVarNode = (Poly *)malloc(PolySize);
-	newVarNode->degree = 1;
+	newVarNode->degree = degree;
 	newVarNode->son = NULL;
 	newVarNode->var = varPriority;
 
@@ -163,11 +163,16 @@ int addNewVariable(const char var, Expressions *exp) {
 			newVarNode->son = head;
 			exp->son = newVarNode;
 		}
+		else if (head->var == varPriority) {
+			head->degree += degree;
+			free(newVarNode);
+			return 0;
+		}
 		else {
 			ptr = head->son;
 			while (ptr) {
 				if (head->var == var) {
-					head->degree += 1;
+					head->degree += degree;
 					free(newVarNode);
 					flag = 1;
 					break;
@@ -334,3 +339,4 @@ int isVarInTable(char c)
 	}
 	return -1;
 }
+

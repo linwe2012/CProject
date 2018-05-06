@@ -39,7 +39,8 @@ ExpressionSets *initExpressiosSets(bool hasID, ExpressionSets *exps, int initSiz
 void pushExpressiosSets(ExpressionSets *exps, ExpressionSetsElem exp);
 ExpressionSetsElem popExpressiosSets(ExpressionSets *exps, ExpressionSetsElem *exp = NULL);
 void freeExpressionSets(ExpressionSets *&exps);
-ExpressionSets *expressionSetsDuplicate(ExpressionSets *Source);
+ExpressionSets *expressionSetsDuplicate(ExpressionSets *Source, bool hasID = true);
+void pushNumberSignToExpression(const char *s, ExpressionSets *exps, ExpresionBuffer *expb);
 
 /**
 * @brief: calculate all the expressions into a number
@@ -60,6 +61,7 @@ PolyType caluclateExpressionResult(ExpressionSets *exps);
 void caluclateExpression(ExpressionSets *exps);
 
 void clearVarValue();
+void clearVarTable();
 
 void initExpressionBuffer(ExpresionBuffer *expb);
 /**
@@ -91,11 +93,22 @@ void printExpressionSet(ExpressionSets *exps);
 * @note:
 */
 void printBufferCurrentOffset(ExpresionBuffer *expb);
+void expressionBufferOffsetUpdate(ExpresionBuffer *expb, int ID);
+void expressionBufferIDReset(ExpresionBuffer *expb);
+
 void printExpression(Expressions *exp);
 void printExpressionSet_all(ExpressionSets *exps);
+void printfAllBuffer(ExpresionBuffer *expb);
 
 void expressionSetsVarCpy(ExpressionSets *exps);
 void expressionSetsVarSync(ExpressionSets *exps);
+
+inline bool isLegalExpressionSetNameChar(char c);
+inline char getRandomLetter();
+int nameExpressionSet(ExpressionSets *exps, char *name);
+void nameLegalizeCpy(char *destination, const char *source);
+
+ExpressionSets *getExpressionSet(int ID, ExpresionBuffer *expb, bool ifDuplicte, int *ifFromFile = NULL, char *name = NULL);
 
 void printExpressionSet_ID(ExpresionBuffer *expb);
 int printExpressionBuffer(ExpresionBuffer *expb);
