@@ -1,0 +1,31 @@
+﻿  Analyzer.cpp
+e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(256): warning C4244: 'initializing': conversion from 'int' to 'GLfloat', possible loss of data
+  e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(254): note: while compiling class template member function 'void Analyzer<int>::plot_update(void)'
+  e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(246): note: see reference to function template instantiation 'void Analyzer<int>::plot_update(void)' being compiled
+  e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(164): note: while compiling class template member function 'void Analyzer<int>::plot_new(void)'
+  e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(137): note: see reference to function template instantiation 'void Analyzer<int>::plot_new(void)' being compiled
+  e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(82): note: while compiling class template member function 'Analyzer<int>::Analyzer(void)'
+  Analyzer.cpp(18): note: see reference to function template instantiation 'Analyzer<int>::Analyzer(void)' being compiled
+  Analyzer.cpp(18): note: see reference to class template instantiation 'Analyzer<int>' being compiled
+e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(261): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(272): warning C4244: 'argument': conversion from 'GLfloat' to 'int', possible loss of data
+e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(296): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+  e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(285): note: while compiling class template member function 'void Analyzer<int>::larr(std::vector<Vertex,std::allocator<_Ty>> &,std::vector<double,std::allocator<double>> &,int,GLfloat,GLfloat)'
+          with
+          [
+              _Ty=Vertex
+          ]
+  e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(272): note: see reference to function template instantiation 'void Analyzer<int>::larr(std::vector<Vertex,std::allocator<_Ty>> &,std::vector<double,std::allocator<double>> &,int,GLfloat,GLfloat)' being compiled
+          with
+          [
+              _Ty=Vertex
+          ]
+  e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(254): note: while compiling class template member function 'void Analyzer<int>::plot_update(void)'
+  e:\codes\vcrepos\analyzer\analyzer\Analyzer.h(246): note: see reference to function template instantiation 'void Analyzer<int>::plot_update(void)' being compiled
+LINK : warning LNK4098: defaultlib 'MSVCRTD' conflicts with use of other libs; use /NODEFAULTLIB:library
+  Generating code
+  2 of 662 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    1 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  Analyzer.vcxproj -> E:\Codes\VCRepos\Analyzer\Release\Analyzer.exe
