@@ -15,6 +15,8 @@
 #include "shader.h"
 #include <GLFW\glfw3.h>
 #include <iostream>
+#include "camera.h"
+
 #define CLOCK_PER_MS (CLOCKS_PER_SEC/1000.0)
 
 struct Vertex
@@ -67,7 +69,10 @@ public:
 	static int passive;
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 	static void window_focus_callback(GLFWwindow* window, int _focused);
+	static void scroll_callback(GLFWwindow* mwindow, double xoffset, double yoffset);
 	void larr(std::vector<Vertex>&res, std::vector<double>&src, int count, GLfloat stretch, GLfloat base);
+	static Camera *camera;
+
 private:
 	int makeaxis();
 	void addvertex(glm::vec3 pos, glm::vec3 clr);
@@ -75,6 +80,10 @@ private:
 	const unsigned int SCR_WIDTH = 800;
 	const unsigned int SCR_HEIGHT = 600;
 	double maxTime;
+	int axiscnt;
+	int laSample;
+	float deltaTime = 0.0f;	// time between current frame and last frame
+	float lastFrame = 0.0f;
 };
 
 template<class T>
@@ -91,8 +100,10 @@ Analyzer<T>::Analyzer()
 	enablePlot = TRUE;
 	anti_aliasing = TRUE;
 	shader = NULL;
-	maxTime = 0;
+	maxTime = 1;
 	firstTimeCall = TRUE;
+	axiscnt = 0;
+	laSample = 4;
 }
 
 template<class T>
@@ -102,12 +113,21 @@ template<class T>
 int Analyzer<T>::passive = FALSE;
 
 template<class T>
+Camera* Analyzer<T>::camera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+template<class T>
 void Analyzer<T>::registerFunction(void(*fun)(T *a, int count), const char*s)
 {
 	fun1.push_back(fun);
 	which.push_back(1);
 	funs.push_back(s);
-	color.push_back(glm::vec3(1.0f, 0.5f, 0.3f));
+	if (funs.size() == 1) {
+		color.push_back(glm::vec3(1.0f, 0.5f, 0.3f));
+	}
+	else {
+		color.push_back(glm::vec3(0.4f, 0.7f, 0.8f));
+	}
+	
 }
 
 template<class T>
@@ -129,10 +149,12 @@ void Analyzer<T>::benchmark()
 	double ct;
 	int f1=0, f2=0;
 	int i;
+	int which_len = which.size();
 	printf("Count");
 	for (int k = 0, len = funs.size(); k < len; k++) {
 		printf("\t|%s", funs[k]);
 	}
+	printf("\n");
 	if (enablePlot == TRUE) {
 		plot_new();
 	}
@@ -140,7 +162,8 @@ void Analyzer<T>::benchmark()
 		f1 = 0;  f2 = 0;
 		data = genData(i);
 		printf("%d", i);
-		for (int k = 0, len = which.size(); k < len; k++) {
+		for (int k = 0; k < which_len; k++) {
+			glfwPollEvents();
 			if (which[k] == 1) {
 				st = clock();
 				fun1[f1](data, i);
@@ -148,14 +171,18 @@ void Analyzer<T>::benchmark()
 				ct = (et - st) / CLOCK_PER_MS;
 				f1++;
 			}
+			glfwPollEvents();
 			time.push_back(ct);
 			if (ct > maxTime) {
 				maxTime = ct;
 			}
 			printf("\t%.1f", ct);
-			plot_request();
 		}
+		plot_request();
 		printf("\n");
+	}
+	while (1) {
+		plot_refresh();
 	}
 }
 
@@ -195,10 +222,11 @@ void Analyzer<T>::plot_new()
 		delete shader;
 	}
 	glfwSetWindowFocusCallback(window, &Analyzer::window_focus_callback);
+	glfwSetScrollCallback(window, &Analyzer::scroll_callback);
 	shader = new Shader("./shaders/3.3.shader.vs.c", "./shaders/3.3.shader.fs.c");
 	indices.clear();
 	graph.clear();
-	cidx = makeaxis();
+	axiscnt = cidx = makeaxis();
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
@@ -221,9 +249,34 @@ void Analyzer<T>::plot_new()
 template<class T>
 void Analyzer<T>::plot_refresh()
 {
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	//get key input
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera->ProcessKeyboard(FORWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera->ProcessKeyboard(BACKWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera->ProcessKeyboard(LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera->ProcessKeyboard(RIGHT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		camera->BudgeCamera(0, 0.5);
+	//glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	shader->use();
+	float currentFrame = glfwGetTime();
+	deltaTime = currentFrame - lastFrame;
+	lastFrame = currentFrame;
+
+	//pass delta time to determine if it should move back
+	camera->PassDeltaTime(deltaTime);
+	// pass projection matrix to shader (note that in this case it could change every frame)
+	glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	shader->setMat4("projection", projection);
+
+	// camera/view transformation
+	glm::mat4 view = camera->GetViewMatrix();
+	shader->setMat4("view", view);
 	glBindVertexArray(VAO);
 	glDrawElements(GL_LINE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
 	glfwSwapBuffers(window);
@@ -253,7 +306,7 @@ template<class T>
 void Analyzer<T>::plot_update()
 {
 	GLfloat y, x;
-	GLfloat range = end - start;
+	GLfloat range = end - start + 1;
 	GLfloat cnt = range * funs.size();
 	
 	if (firstTimeCall) {
@@ -267,6 +320,7 @@ void Analyzer<T>::plot_update()
 			indices.push_back(~0);
 		}
 		graph_des = graph;
+		firstTimeCall = FALSE;
 	}
 	else {
 		larr(graph, time, range, 1.8f, -0.9f);
@@ -277,7 +331,6 @@ void Analyzer<T>::plot_update()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*indices.size(), &(indices[0]), GL_STATIC_DRAW);
 	plot_refresh();
-	firstTimeCall = FALSE;
 }
 
 template<class T>
@@ -285,38 +338,65 @@ void Analyzer<T>::larr(std::vector<Vertex>&res, std::vector<double>&src, int cou
 {
 	int func = funs.size();
 	int cnt = src.size() / func;
-	GLfloat arr[100];
-	GLfloat coeff[100];
+	int srcsz = src.size();
+	int lastep;
+	//y coordinate y0,y1,,,
+	static double arr[20];
+	//coefficient y0/(x0-x1)(x0-x2)
+	static double coeff[20];
+	//denominator (x0-x1)(x0-x2)
+	static double dnmtr[20];
 	double tempt;
-	GLfloat temp;
+	double temp;
+	int allowance;
+	//sampling
+	allowance = cnt;
+	if (cnt > laSample) {
+		lastep = cnt / laSample;
+		cnt = laSample;
+	}
+	else {
+		lastep = 1;
+	}
+	//plot existing point
+	for (int i = 0; i < func; i++) {
+		for (int k = 0; k < allowance; k++) {
+			res[count*i + k + axiscnt].position.y = src[i + k * func] / maxTime * stretch + base;
+		}
+	}
+	//(x0-x1)(x0-x2)...(x1-x0)(x1-x2)...
+	for (int k = 0; k < cnt; k++) {
+		temp = 1.0;
+		for (int j = 0; j < cnt; j++) {
+			if (j == k)
+				continue;
+			temp *= double(k - j) / count * stretch * lastep; //(Xk-Xj)
+		}
+		dnmtr[k] = temp;
+		//printf("dnmtr[%d]=%.10f, step=%d\t",k, temp, lastep);
+	}
 	for (int i = 0; i < func; i++) {
 		//y0,y1,y2...
+		//printf("\n");
 		for (int k = 0; k < cnt; k++) {
-			tempt = src[k*func];
-			arr[k] = tempt / maxTime * stretch + base;
+			tempt = src[srcsz-k*func*lastep - func + i];
+			arr[cnt - k - 1] = tempt / maxTime * stretch + base;
+			//y0/(x0-x1)(x0-x2)...
+			coeff[cnt-k - 1] = arr[cnt - k -1] / dnmtr[cnt - k - 1];
+			//printf("tempt[%d]=%.2f, coeff[%d]=%.10f\t", srcsz - k * func*lastep - func + i, tempt, cnt - k - 1, coeff[cnt - k - 1]);
 		}
-		//y0/(x0-x1)(x0-x2)...
-		for (int k = 0; k < cnt; k++) {
-			temp = 1.0f;
-			for (int j = 0; j < cnt; j++) {
-				if (j == k)
-					continue;
-				temp *= float(k-j)*stretch / count; //(Xk-Xj)
-			}
-			coeff[k] = arr[k] / temp;
-		}
-		for (int k = 0; k < count; k++) {
-			GLfloat ypos = 0.0f;
+		for (int k = allowance; k < count; k++) {
+			double ypos = 0.0;
 			for (int j = 0; j < cnt; j++) {
 				temp = coeff[j];
 				for (int m = 0; m < cnt; m++) {
 					if (j == m)
 						continue;
-					temp *= float(k - m)*stretch / count;
+					temp *= double(k - m*lastep)*stretch / count;
 				}
 				ypos += temp;
 			}
-			res[k+7].position.y = ypos; // = glm::vec3(float(k) / count * stretch + base, ypos, 0.0f);
+			res[k+axiscnt+i*count].position.y = GLfloat(ypos); // = glm::vec3(float(k) / count * stretch + base, ypos, 0.0f);
 		}
 	}
 }
@@ -364,4 +444,10 @@ template<class T>
 void Analyzer<T>::window_focus_callback(GLFWwindow* window, int _focused)
 {
 	focused = _focused;
+}
+
+template<class T>
+void Analyzer<T>::scroll_callback(GLFWwindow* mwindow, double xoffset, double yoffset)
+{
+	camera->ProcessMouseScroll(yoffset);
 }
