@@ -2,6 +2,7 @@
 #include "io.h"
 #include "sorts.h"
 #include <math.h>
+#define TORGB(x) ((x) / 255.0f)
 //for test
 void func(int *a, int count) {
 	int i = 0;
@@ -28,7 +29,7 @@ int *gen(int c) {
 void parseSetAmount(const char *s, int &start, int &end, int &step) {
 	int num;
 	
-	for(int i=0;i<2;i++) {
+	for(int i=0;i<3;i++) {
 		num = 0;
 		while (*s == ' ')
 			s++;
@@ -54,36 +55,48 @@ int main()
 	Analyzer<int> an;
 	char buf[1000];
 	int start, end, step;
-	an.registerFunction(shellsort, "Shell");
 	an.registerFunction(selectsort, "Select");
 	an.registerFunction(bubblesort, "Bubble");
-	an.registerFunction(insertsort, "Insert");
-	an.registerFunction(mergesort, "Merge");
-	an.registerFunction(quicksort_simple, "Quick");
+	an.registerFunction(insertsort, "Insert", glm::vec3(TORGB(0x49), TORGB(0xbe), TORGB(0xa1)));
+	an.registerFunction(mergesort, "Merge", glm::vec3(TORGB(0x50), TORGB(0x98), TORGB(0xd2)));//5094c9
+	an.registerFunction(quicksort_simple, "Quick", glm::vec3(TORGB(0xae), TORGB(0xc5), TORGB(0x8d)));//#aec58d
+	an.registerFunction(shellsort, "Shell", glm::vec3(TORGB(0x00), TORGB(0x71), TORGB(0xcc)));//#007acc
 	
-	an.registerFunction(radixsort_lsd, "Radix");
+	an.registerFunction(radixsort_lsd, "Radix", glm::vec3(TORGB(0xa0), TORGB(0x60), TORGB(0xbd)));
 	//an.registerFunction(countingsort, "Count");
 	an.registerDataDealer(writeData);
 	an.registerData(genArr);
 	printf("##################################################################################\n"
-		   "##                                    Analyzer                                  ##\n"
-		   "##################################################################################\n");
+		   "###                                    Analyzer                                ###\n"
+		   "##################################################################################\n\n");
+	printf("| Input 'exit' to stop\n");
+	printf("| You can close the graph to re-enter numbers\n");
+	printf("| To disable file operation, input 'io off'\n");
 	while (1) {
-		printf("Input the amount of data you want to test\n");
-		printf("starting ending step (seperated by single space)\n");
+		printf("\nInput the amount of data you want to test\n");
+		printf("starting ending step (seperated by spaces)\n");
 		fgets(buf, 1000, stdin);
 		start = 0;
 		end = 10000;
 		step = 100;
-		if (strcmp(buf, "exit") == 0) {
+		if (strcmp(buf, "exit\n") == 0) {
 			break;
 		}
-		if (buf[0] == '\n' || buf[0] == '\r') {
+		if (strcmp(buf, "io off\n")) {
+			an.registerDataDealer(NULL);
+			printf("file operation is disabled\n");
+		}
+		else if (strcmp(buf, "io on\n")) {
+			an.registerDataDealer(writeData);
+			printf("file operation is enabled\n");
+		}
+		else if (buf[0] == '\n' || buf[0] == '\r') {
 			printf("We will use default settings.\n");
+			printf("%d %d %d", start, end, step);
 		}
 		else {
-			printf("%d %d %d", start, end, step);
 			parseSetAmount(buf, start, end, step);
+			printf("%d %d %d", start, end, step);
 		}
 		printf("\n");
 		an.setDataAmount(start, end, step);

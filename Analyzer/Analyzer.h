@@ -114,6 +114,7 @@ Analyzer<T>::Analyzer()
 	axiscnt = 0;
 	laSample = 4;
 	shouldEnd = FALSE;
+	datadealer = NULL;
 }
 
 template<class T>
@@ -189,6 +190,10 @@ void Analyzer<T>::benchmark()
 	double mminTime;
 	unsigned long largestTime = (~0L) >> 1;
 	int *tobetest = (int *)malloc(sizeof(int) * (end+1));
+	if (genData == NULL) {
+		printf("No Data generation functions");
+		return;
+	}
 	HANDLE hConsoleColor;
 	hConsoleColor = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hConsoleColor, BF_BLACK_BWHITE);
@@ -201,11 +206,13 @@ void Analyzer<T>::benchmark()
 	if (enablePlot == TRUE) {
 		plot_new();
 	}
+	time.clear();
 	for (i = start; i <= end;  i += step) {
 		f1 = 0;  f2 = 0; mminTime = double(0x7fffffff);
 		data = genData(i);
 		printf("%d\t", i);
-		datadealer(data, i, false, "__Unsorted__", 0);
+		if(datadealer != NULL)
+			datadealer(data, i, false, "__Unsorted__", 0);
 		for (int k = 0; k < which_len; k++) {
 			memcpy(tobetest, data, i * sizeof(int));
 			glfwPollEvents();
@@ -215,7 +222,8 @@ void Analyzer<T>::benchmark()
 				et = clock();
 				ct = (et - st) / CLOCK_PER_MS;
 				f1++;
-				datadealer(tobetest, i, true, funs[k], ct);
+				if (datadealer != NULL)
+					datadealer(tobetest, i, true, funs[k], ct);
 			}
 			glfwPollEvents();
 			time.push_back(ct);
@@ -294,6 +302,8 @@ void Analyzer<T>::plot_new()
 	graph.clear();
 	lines.clear();
 	axiscnt = cidx = makeaxis();
+
+	glLineWidth(1.5f);
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
@@ -322,9 +332,8 @@ void Analyzer<T>::plot_new()
 
 	maxTime = -1;
 	shouldEnd = FALSE;
-	plot_refresh();
 	firstTimeCall = TRUE;
-
+	plot_refresh();
 }
 
 template<class T>
@@ -350,7 +359,7 @@ void Analyzer<T>::plot_refresh()
 		}
 	}
 	//glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+	glClearColor(0.15f, 0.15f, 0.16f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	shader->use();
 	float currentFrame = glfwGetTime();
@@ -530,12 +539,12 @@ template<class T>
 int Analyzer<T>::makeaxis()
 {
 	//origin index:0
-	Vertex vtx = { glm::vec3(originx, originy, 0.0f) , glm::vec3(1.0f, 0.0f, 0.0f) };
+	Vertex vtx = { glm::vec3(originx, originy, 0.0f) , glm::vec3(1.0f, 1.0f, 0.0f) };
 	graph.push_back(vtx);
 	//y & arrows  vbo used:1-3
-	addvertex(glm::vec3(originx, originy + 1.8f, 0.0f),                         glm::vec3(0.0f, 1.0f, 0.0f)); addLineIdx(0, 1);
-	addvertex(glm::vec3(originx - arrowSize, originy + 1.8f - arrowSize, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); addLineIdx(1, 2);
-	addvertex(glm::vec3(originx + arrowSize, originy + 1.8f - arrowSize, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); addLineIdx(1, 3);
+	addvertex(glm::vec3(originx, originy + 1.8f, 0.0f),                         glm::vec3(1.0f, 0.0f, 0.0f)); addLineIdx(0, 1);
+	addvertex(glm::vec3(originx - arrowSize, originy + 1.8f - arrowSize, 0.0f), glm::vec3(1.0f, 0.0f, 0.1f)); addLineIdx(1, 2);
+	addvertex(glm::vec3(originx + arrowSize, originy + 1.8f - arrowSize, 0.0f), glm::vec3(1.0f, 0.0f, 0.1f)); addLineIdx(1, 3);
 	//x & arrows vbo used:4-6
 	addvertex(glm::vec3(originx + 1.8f, originy, 0.0f),                         glm::vec3(0.0f, 0.0f, 1.0f)); addLineIdx(0, 4);
 	addvertex(glm::vec3(originx + 1.8f - arrowSize, originy - arrowSize, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); addLineIdx(4, 5);

@@ -40,7 +40,6 @@ int *genArr(int n)//输入n，生成n个0~65535的可重复随机正整数，保
 	return p;
 }
 
-
 void writeData(int *arr, int n, bool sorted, const char *name, double time)//读入一个整型数组的首地址以及数组元素个数，将他们保存到文本文档中 
 {
 	FILE *fp;
@@ -73,8 +72,6 @@ void writeData(int *arr, int n, bool sorted, const char *name, double time)//读
 		exit(0);
 	}
 }
-
-
 
 int * readTXT(int n)//从一个文本文档中读取n个整型数据，返回该整型数组的首地址 
 {
