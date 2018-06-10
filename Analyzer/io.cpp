@@ -41,21 +41,33 @@ int *genArr(int n)//输入n，生成n个0~65535的可重复随机正整数，保
 }
 
 
-
-void writeData(int n, int *arr)//读入一个整型数组的首地址以及数组元素个数，将他们保存到文本文档中 
+void writeData(int *arr, int n, bool sorted, const char *name, double time)//读入一个整型数组的首地址以及数组元素个数，将他们保存到文本文档中 
 {
 	FILE *fp;
 	int i;
-	if ((fp = fopen("record.txt", "w")) == NULL) {
+	if (_access("record.txt", 0) == 0) {
+		fopen_s(&fp, "record.txt", "a");
+	}
+	else {
+		fopen_s(&fp, "record.txt", "w");
+	}
+	if (fp == NULL) {
 		printf("File open error!\n"); getchar(); getchar();
 		exit(0);
 	}
-
+	
+	if (sorted) {
+		fprintf(fp, "sorted by %s (time cost: %lf):\n", name, time);
+	}
+	else {
+		fprintf(fp, "\n\n\nunsorted Array:\n");
+	}
 	for (i = 0; i<n; i++)
 	{
-		fprintf(fp, "%d\n", *(arr + i));//写入文本文档
+		fprintf(fp, "%d\t", *(arr + i));//写入文本文档
 	}
-
+	fprintf(fp, "  __end\n");
+	//printf("hi\n");
 	if (fclose(fp)) {
 		printf("Cannot close the file!\n"); getchar(); getchar();
 		exit(0);

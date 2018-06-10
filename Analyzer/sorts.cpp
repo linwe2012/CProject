@@ -13,6 +13,13 @@ int getMax(int *a, int count)
 	}
 	return max;
 }
+
+inline void swapint(int *a, int *b)
+{
+	int c = *b;
+	*b = *a;
+	*a = c;
+}
 /////////////////////////////////////
 ////     Counting Sort           ////
 /////////////////////////////////////
@@ -191,7 +198,8 @@ int quick_cmp(const void *a, const void *b) {
 	return *(int*)a - *(int*)b;
 }
 
-void quicksort_simple(int *a, int count) {
+void quicksort_simple(int *a, int count) 
+{
 	int i, j, swap, temp;
 	if (count < 2) return;
 	temp = *a;
@@ -299,6 +307,11 @@ void shellsort(int *a, int count)
 	}
 }
 
+void heapsort(int *a, int count)
+{
+
+}
+
 void selectsort(int a[], int length)//利用选择排序法对数组进行排序，并记录时间频度与时间复杂度 
 {
 	int i, j;
@@ -362,7 +375,7 @@ void insertsort(int a[], int length)   //利用插入排序法对数组进行排
 		count += 3;
 	}
 }
-
+/*
 #define AMOUNT 20
 int main()
 {
@@ -387,4 +400,4 @@ int main()
 	}
 	getchar(); getchar();
 	return 0;
-}
+}*/

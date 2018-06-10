@@ -30,15 +30,21 @@
     <ClInclude Include="io.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="sorts.h">
+      <Filter>headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Analyzer.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="glad.c">
       <Filter>Dependecies</Filter>
     </ClCompile>
     <ClCompile Include="io.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="sorts.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Analyzer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
