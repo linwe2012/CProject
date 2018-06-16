@@ -475,6 +475,7 @@ void Analyzer<T>::benchmark()
 		printf("\n");
 	}
 	free(tobetest);
+	//clear lines
 	lines.clear();
 	glBindVertexArray(VAO_lines);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_lines);
@@ -606,7 +607,7 @@ void Analyzer<T>::plot_refresh()
 					plot_mem();
 					firtTimeMemCall = FALSE;
 				}
-				camera->BudgeCamera(0, 0.7, 177, 3.0f + 0.5f, 0.0f, -0.5f, -180.0f);
+				camera->BudgeCamera(0, 0.7f, 177, 3.0f + 0.5f, 0.0f, -0.5f, -180.0f);
 				ifMemView = TRUE;
 				printf("\rCurrently In Memory Cost View.  ");
 			}
@@ -625,7 +626,7 @@ void Analyzer<T>::plot_refresh()
 	glClearColor(0.15f, 0.15f, 0.16f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	shader->use();
-	float currentFrame = glfwGetTime();
+	float currentFrame = static_cast<float>(glfwGetTime());
 	deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
 
@@ -684,13 +685,13 @@ template<class T>
 void Analyzer<T>::plot_update()
 {
 	GLfloat y, x;
-	GLfloat range = end - start + 1;
+	GLfloat range = static_cast<GLfloat>(end - start + 1);
 	GLfloat length = range / step;
 	//GLfloat cnt = range * funs.size();
 
 	if (firstTimeCall) {
 		for (int i = 0, len = funs.size(); i<len; i++) {
-			y = time[i] / maxTime * 1.8f + originy;
+			y = static_cast<GLfloat>(time[i] / maxTime * 1.8f + originy);
 			for (int j = 0; j < length-1; j++) {
 				x = j / range * 1.8f * step + originx;
 				addvertex(glm::vec3(x, y, 0.0f), color[i]);
@@ -707,7 +708,7 @@ void Analyzer<T>::plot_update()
 	}
 	else {
 		int sz = time.size() / funs.size();
-		larr(graph, time, length, 1.8f, -0.9f);
+		larr(graph, time, static_cast<int>(length), 1.8f, -0.9f);
 		lines[1].position.x = lines[0].position.x = originx + sz / length * 1.8f;
 	}
 	glBindVertexArray(VAO);
@@ -752,14 +753,14 @@ void Analyzer<T>::larr(std::vector<Vertex>&res, std::vector<double>&src, int cou
 	//y coordinate y0,y1,,,
 	static double arr[20];
 	//coefficient y0/(x0-x1)(x0-x2)
-	static double coeff[20];
+	//static double coeff[20];
 	//denominator (x0-x1)(x0-x2)
-	static double dnmtr[20];
-	double tempt;
-	double temp;
+	//static double dnmtr[20];
+	//double tempt;
+	//double temp;
 	int allowance;
-	double slope;
-	double tbase;
+	//double slope;
+	//double tbase;
 	//sampling
 	allowance = cnt;
 	if (cnt > laSample) {
@@ -772,7 +773,7 @@ void Analyzer<T>::larr(std::vector<Vertex>&res, std::vector<double>&src, int cou
 	//plot existing point
 	for (int i = 0; i < func; i++) {
 		for (int k = 0; k < allowance; k++) {
-			res[count*i + k + axiscnt].position.y = src[i + k * func] / maxTime * stretch + base;
+			res[count*i + k + axiscnt].position.y = static_cast<GLfloat>(src[i + k * func] / maxTime * stretch + base);
 		}
 	}
 	//for (int i = 0; i < func; i++) {
@@ -866,7 +867,7 @@ void Analyzer<T>::window_focus_callback(GLFWwindow* window, int _focused)
 template<class T>
 void Analyzer<T>::scroll_callback(GLFWwindow* mwindow, double xoffset, double yoffset)
 {
-	camera->ProcessMouseScroll(yoffset);
+	camera->ProcessMouseScroll(static_cast<GLfloat>(yoffset));
 }
 
 //timer callbacks
@@ -900,13 +901,13 @@ VOID CALLBACK Analyzer<T>::getMemInfo(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 template<class T>
 void Analyzer<T>::plot_mem()
 {
-	int i, j, k, len;
+	int i, j, len;
 	int funsz = funs.size();
 	len = funcost.size() / funsz;
 	int itr;
 	DWORD maxMem = 0;
 	GLfloat x, y, z;
-	GLfloat range = end - start + 1;
+	GLfloat range = static_cast<GLfloat>(end - start + 1);
 	Vertex vtx;
 	GLuint memIdx;
 	MemGraph.clear();

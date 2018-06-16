@@ -118,8 +118,11 @@ void quicksort(void *base, int num, int width, int(*cmp)(const void *, const voi
 
 	lo = (char *)base;
 	hi = (char *)base + (num - 1) * width;
+	size = (hi - lo) / width + 1;
 	stkptr = 0;
-	
+	if (size < 2) {
+		return;
+	}
 recurse:
 	size = (hi - lo) / width + 1;
 	if (hi - lo == width) {
@@ -196,6 +199,11 @@ recurse:
 }
 int quick_cmp(const void *a, const void *b) {
 	return *(int*)a - *(int*)b;
+}
+
+void quicksort_rewrap(int *a, int count)
+{
+	quicksort(a, count, sizeof(int), quick_cmp);
 }
 
 void quicksort_simple(int *a, int count) 
@@ -317,7 +325,7 @@ void selectsort(int a[], int length)//利用选择排序法对数组进行排序
 	int i, j;
 	int k;
 	int temp;
-	clock_t start, end;
+	//clock_t start, end;
 	for (i = 0; i<length - 1; i++)
 	{
 		k = i;
@@ -358,9 +366,9 @@ void insertsort(int a[], int length)   //利用插入排序法对数组进行排
 {
 	int i, j;
 	int temp;
-	clock_t start, end;
-	int count = 1;//时间频度 
-	start = clock();//计时开始 
+	//clock_t start, end;
+	//int count = 1;//时间频度 
+	//start = clock();//计时开始 
 	for (i = 1; i<length; i++)
 	{
 		temp = a[i];
@@ -369,17 +377,17 @@ void insertsort(int a[], int length)   //利用插入排序法对数组进行排
 		{
 			a[j + 1] = a[j];
 			j--;
-			count += 2;
+			//count += 2;
 		}
 		a[j + 1] = temp;//找到合适位置，将元素插入。
-		count += 3;
+		//count += 3;
 	}
 }
-/*
-#define AMOUNT 20
-int main()
+
+#define AMOUNT 20000
+int mmain()
 {
-	int a[AMOUNT];
+	int *a = (int * ) malloc(AMOUNT * sizeof(int));
 	srand(time(NULL));
 	for (int k = 0; k < AMOUNT; k++) {
 		a[k] = rand() % 0xff;
@@ -390,7 +398,8 @@ int main()
 	printf("\n");
 	//a[0] = 1; a[1] = 3; a[2] = 2; a[3] = 4;
 	//a[0] = 3; a[1] = 1; a[2] = 2;
-	//quicksort(a, 20, sizeof(int), quick_cmp);
+	//quicksort(a, AMOUNT, sizeof(int), quick_cmp);
+	//quicksort_rewrap(a, AMOUNT);
 	//mergesort_bottomup(a, AMOUNT);
 	//mergesort(a, AMOUNT);
 	//shellsort(a, AMOUNT);
@@ -398,6 +407,8 @@ int main()
 	for(int k = 0; k < AMOUNT; k++) {
 		printf("%d\t", a[k]);
 	}
+	free(a);
+	printf("\n done");
 	getchar(); getchar();
 	return 0;
-}*/
+}
